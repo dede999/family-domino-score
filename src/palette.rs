@@ -28,6 +28,7 @@ pub const PALETTE: [PaletteColor; 8] = [
     PaletteColor { name: "Marrom", light: "#5f371b", light_core: "#d6c8bc", dark: "#a87b5d", dark_core: "#3e332a" },
 ];
 
+#[cfg_attr(not(feature = "server"), allow(dead_code))]
 pub fn is_valid(color: u8) -> bool {
     (color as usize) < PALETTE.len()
 }

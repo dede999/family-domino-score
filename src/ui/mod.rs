@@ -1,3 +1,4 @@
+mod colors;
 mod home;
 mod new_room;
 mod room;

@@ -135,6 +135,15 @@ try:
     code = s("GET", f"/element/{code}/text")
     ok(f"sala criada ({code})")
 
+    # 3b. Cores das duplas: André & Sobrinho troca a principal para Roxo
+    wait_text("Cores das duplas")
+    click("(//div[@class='pair-colors'])[1]//button[normalize-space()='Mudar']")
+    click("(//div[@class='pair-colors'])[1]//fieldset[legend='Principal']//button[@title='Roxo']")
+    find("(//div[@class='pair-colors'])[1]//span[@title='Roxo']")
+    shot("2b-cores-duplas")
+    click("(//div[@class='pair-colors'])[1]//button[normalize-space()='Pronto']")
+    ok("cor da dupla trocada")
+
     # 4. Boi: regra da carroça, empate, depois saída girando
     click(btn("Começar boi"))
     wait_text("Quem saiu?")

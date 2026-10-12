@@ -1,3 +1,4 @@
+use super::colors::{PairColorsCard, Swatch};
 use super::new_room::{PlayerDraft, PlayersEditor, seat_label};
 use super::{Cross, current_user, sleep_ms, use_me_resource};
 use crate::Route;
@@ -92,6 +93,10 @@ fn RoomBody(view: RoomView, on_change: EventHandler<()>) -> Element {
             }
         }
 
+        if view.can_edit && view.mode == Mode::Duplas {
+            PairColorsCard { view: view.clone(), on_change }
+        }
+
         if view.is_owner {
             section { class: "card",
                 div { class: "row spread",
@@ -121,6 +126,10 @@ fn RoomBody(view: RoomView, on_change: EventHandler<()>) -> Element {
                         for (seat, p) in view.players.iter().enumerate() {
                             li { key: "{p.id}",
                                 span { class: "seat", {seat_label(view.mode, seat)} }
+                                if view.mode == Mode::Individual {
+                                    Swatch { color: p.color }
+                                    " "
+                                }
                                 "{p.name}"
                                 if let Some(u) = &p.username {
                                     span { class: "muted", " @{u}" }

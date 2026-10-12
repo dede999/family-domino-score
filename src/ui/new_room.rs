@@ -1,7 +1,9 @@
 use super::{current_user, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
+use super::colors::{ColorPicker, Swatch};
 use crate::model::{Mode, PlayerInput};
+use crate::palette;
 use dioxus::prelude::*;
 
 /// Linha editável de jogador: nome e, opcionalmente, a conta vinculada.
@@ -128,6 +130,9 @@ pub fn NewRoom() -> Element {
 #[component]
 pub fn PlayersEditor(mode: Mode, players: Signal<Vec<PlayerDraft>>) -> Element {
     let count = players.read().len();
+    // Cor que cada jogador vai ter: a escolhida ou a primeira livre (como no servidor).
+    let colors = preview_colors(&players.read());
+    let mut picking = use_signal(|| None::<usize>);
     rsx! {
         div { class: "players-editor",
             p { class: "muted",
@@ -160,12 +165,24 @@ pub fn PlayersEditor(mode: Mode, players: Signal<Vec<PlayerDraft>>) -> Element {
                     // Todas as linhas têm os mesmos botões, para as colunas ficarem
                     // alinhadas. Na primeira, o ↑ fica desativado.
                     div { class: "row-actions",
+                        if mode == Mode::Individual {
+                            Swatch {
+                                color: colors[seat],
+                                selected: picking() == Some(seat),
+                                onclick: move |_| {
+                                    picking.set(if picking() == Some(seat) { None } else { Some(seat) })
+                                },
+                            }
+                        }
                         button {
                             r#type: "button",
                             class: "icon",
                             title: "Subir na roda",
                             disabled: seat == 0,
-                            onclick: move |_| players.write().swap(seat - 1, seat),
+                            onclick: move |_| {
+                                players.write().swap(seat - 1, seat);
+                                picking.set(None);
+                            },
                             "↑"
                         }
                         if mode == Mode::Individual && count > 2 {
@@ -175,8 +192,21 @@ pub fn PlayersEditor(mode: Mode, players: Signal<Vec<PlayerDraft>>) -> Element {
                                 title: "Remover",
                                 onclick: move |_| {
                                     players.write().remove(seat);
+                                    picking.set(None);
                                 },
                                 "×"
+                            }
+                        }
+                    }
+                    if mode == Mode::Individual && picking() == Some(seat) {
+                        div { class: "row-picker",
+                            ColorPicker {
+                                value: colors[seat],
+                                taken: colors.iter().enumerate().filter(|(i, _)| *i != seat).map(|(_, c)| *c).collect::<Vec<u8>>(),
+                                onchange: move |c: u8| {
+                                    players.write()[seat].color = Some(c);
+                                    picking.set(None);
+                                },
                             }
                         }
                     }
@@ -192,6 +222,18 @@ pub fn PlayersEditor(mode: Mode, players: Signal<Vec<PlayerDraft>>) -> Element {
             }
         }
     }
+}
+
+/// Mesma regra do servidor: cor escolhida, ou a primeira livre na ordem da roda.
+fn preview_colors(players: &[PlayerDraft]) -> Vec<u8> {
+    let mut colors: Vec<Option<u8>> = players.iter().map(|p| p.color).collect();
+    for i in 0..colors.len() {
+        if colors[i].is_none() {
+            let taken: Vec<u8> = colors.iter().flatten().copied().collect();
+            colors[i] = Some(palette::first_free(&taken));
+        }
+    }
+    colors.into_iter().flatten().collect()
 }
 
 pub fn seat_label(mode: Mode, seat: usize) -> String {
