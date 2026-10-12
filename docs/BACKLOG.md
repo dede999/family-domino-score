@@ -19,7 +19,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
    **Preenchimento da cruz no sentido anti-horário**: cima, esquerda, baixo,
    direita.
 3. [x] Botões apagados até o app carregar (ver Infra).
-4. Os demais itens, na ordem abaixo.
+4. [x] Espaçamento, cores e bolinhas.
+5. Mãos do boi como fileira de quadrados (próximo), depois o histórico.
 
 ## Visual
 
@@ -29,7 +30,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   cabeçalho em todas as telas (`← Início` + `.page-head`). Linhas de jogador
   em grade fixa (o ↑ da primeira fica desativado). Corrigido "Sai: Paitrocar".
 
-- [ ] **Cor por jogador, editável.**
+- [x] **Cor por jogador, editável.** Feito: `src/palette.rs`, tabela `pairs`,
+  `bois.colors`, cartão "Cores das duplas" e bolinha de cor no editor de
+  jogadores.
   - Escolha numa paleta fixa de 8 cores, não num seletor livre. A paleta tem
     cores distintas entre si e legíveis no tema claro e no escuro.
   - A cor é guardada como índice da paleta (não como hex), e a paleta fica numa
@@ -53,7 +56,7 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   - Cada boi guarda as cores usadas quando começou. O histórico não muda se
     alguém trocar de cor depois.
 
-- [ ] **Bolinhas na cor do lado.**
+- [x] **Bolinhas na cor do lado.** Feito: `Cross` em `src/ui/mod.rs`.
   - Batida: bolinha cheia na cor.
   - Fechado (decidido: casca escura + miolo claro; o grau de claridade sai do
     teste de contraste na página de cores): só o tom claro é difícil de ver em
