@@ -78,7 +78,9 @@ pub fn NewRoom() -> Element {
     rsx! {
         main { class: "page",
             header { class: "top",
-                Link { to: Route::Home {}, "← Voltar" }
+                Link { to: Route::Home {}, "← Início" }
+            }
+            section { class: "page-head",
                 h1 { "Nova sala" }
             }
             form { class: "card stack", onsubmit: submit,
@@ -147,29 +149,32 @@ pub fn PlayersEditor(mode: Mode, players: Signal<Vec<PlayerDraft>>) -> Element {
                     }
                     input {
                         class: "username",
-                        placeholder: "@conta (opcional)",
+                        placeholder: "@conta",
                         autocapitalize: "none",
                         value: "{players.read()[seat].username}",
                         oninput: move |e| players.write()[seat].username = e.value(),
                     }
-                    if seat > 0 {
+                    // Todas as linhas têm os mesmos botões, para as colunas ficarem
+                    // alinhadas. Na primeira, o ↑ fica desativado.
+                    div { class: "row-actions",
                         button {
                             r#type: "button",
                             class: "icon",
                             title: "Subir na roda",
+                            disabled: seat == 0,
                             onclick: move |_| players.write().swap(seat - 1, seat),
                             "↑"
                         }
-                    }
-                    if mode == Mode::Individual && count > 2 {
-                        button {
-                            r#type: "button",
-                            class: "icon",
-                            title: "Remover",
-                            onclick: move |_| {
-                                players.write().remove(seat);
-                            },
-                            "×"
+                        if mode == Mode::Individual && count > 2 {
+                            button {
+                                r#type: "button",
+                                class: "icon",
+                                title: "Remover",
+                                onclick: move |_| {
+                                    players.write().remove(seat);
+                                },
+                                "×"
+                            }
                         }
                     }
                 }

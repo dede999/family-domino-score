@@ -23,9 +23,11 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 
 ## Visual
 
-- [ ] **Revisão de espaçamento e coerência visual.** Usar uma escala única de
-  espaços (4/8/12/16/24) em variáveis CSS e revisar card, título, botões e
-  listas para usar só ela. Hoje os valores estão espalhados em `assets/main.css`.
+- [x] **Revisão de espaçamento e coerência visual.** Escala `--sp-1..6`
+  (4/8/12/16/24/48) em `assets/main.css`. O espaço entre blocos vem do `gap`
+  do contêiner (`.page`, `.card`); elementos não têm margem própria. Mesmo
+  cabeçalho em todas as telas (`← Início` + `.page-head`). Linhas de jogador
+  em grade fixa (o ↑ da primeira fica desativado). Corrigido "Sai: Paitrocar".
 
 - [ ] **Cor por jogador, editável.**
   - Escolha numa paleta fixa de 8 cores, não num seletor livre. A paleta tem

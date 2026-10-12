@@ -59,7 +59,7 @@ fn RoomBody(view: RoomView, on_change: EventHandler<()>) -> Element {
     };
 
     rsx! {
-        section { class: "room-head",
+        section { class: "page-head",
             h1 { "{view.name}" }
             p { class: "muted",
                 "Código "
@@ -276,10 +276,12 @@ fn Scoreboard(view: RoomView, boi: BoiView, on_change: EventHandler<()>) -> Elem
                             }
                         }
                     } else if let Some(seat) = starter() {
-                        p {
-                            "Sai: "
-                            strong { "{view.player_name(boi.seating[seat])}" }
-                            button { class: "link", onclick: move |_| choosing.set(true), " trocar" }
+                        p { class: "starter-line",
+                            span {
+                                "Sai: "
+                                strong { "{view.player_name(boi.seating[seat])}" }
+                            }
+                            button { class: "link", onclick: move |_| choosing.set(true), "trocar" }
                         }
                     }
                 }
