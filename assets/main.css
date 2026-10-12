@@ -1,0 +1,209 @@
+:root {
+  --bg: #f4f1ea;
+  --card: #fffdf8;
+  --text: #1f1d1a;
+  --muted: #6b665d;
+  --line: #d9d3c7;
+  --accent: #1d6b4f;
+  --accent-text: #ffffff;
+  --ball: #1f1d1a;
+  --win: #b8860b;
+  --error: #b3261e;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151412;
+    --card: #1f1d1a;
+    --text: #f1ede4;
+    --muted: #a39d92;
+    --line: #3a3732;
+    --accent: #4fb589;
+    --accent-text: #0f1a14;
+    --ball: #f1ede4;
+    --win: #e0b44c;
+    --error: #ff8a80;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+a { color: var(--accent); }
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 16px 48px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.top h1 { font-size: 1.4rem; margin: 8px 0; }
+.who { display: flex; align-items: center; gap: 12px; }
+
+h1, h2, h3 { line-height: 1.2; }
+h2 { font-size: 1.15rem; margin: 0 0 8px; }
+h3 { font-size: 0.95rem; margin: 12px 0 4px; color: var(--muted); }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+}
+
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+.center { text-align: center; }
+.error { color: var(--error); }
+
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.row input { flex: 1; min-width: 0; }
+.spread { justify-content: space-between; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
+
+input {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  min-width: 0;
+}
+
+button, .button {
+  font: inherit;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+button:disabled { opacity: 0.5; cursor: default; }
+
+/* Até o app hidratar (marca `data-pronto`, posta em `App`), cliques e digitação
+   se perdem. Links continuam ativos: são <a> de verdade e funcionam sem o app. */
+html:not([data-pronto]) :is(button, input, select, textarea) {
+  pointer-events: none;
+  opacity: 0.5;
+}
+button.secondary { background: transparent; color: var(--accent); }
+button.link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  padding: 4px 0;
+  text-decoration: underline;
+}
+button.icon {
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--text);
+  border-color: var(--line);
+}
+button.primary { width: 100%; font-size: 1.05rem; padding: 14px; }
+
+.segmented { border: none; padding: 0; margin: 0; display: flex; gap: 8px; }
+.segmented legend { font-size: 0.9rem; margin-bottom: 4px; padding: 0; }
+.segmented button { flex: 1; background: transparent; color: var(--accent); }
+.segmented button.on { background: var(--accent); color: var(--accent-text); }
+
+.players-editor { display: flex; flex-direction: column; gap: 8px; }
+.players-editor p { margin: 0; font-size: 0.85rem; }
+.player-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.player-row input { flex: 1 1 120px; }
+.player-row .username { flex: 1 1 110px; }
+.seat {
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-width: 4.5em;
+}
+
+.rooms { list-style: none; padding: 0; margin: 0; }
+.rooms li { padding: 10px 0; border-top: 1px solid var(--line); }
+.rooms li:first-child { border-top: none; }
+.rooms a { text-decoration: none; color: var(--text); }
+
+.stats { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 0; }
+.stats dt { color: var(--muted); }
+.stats dd { margin: 0; }
+
+.room-head h1 { margin: 4px 0; font-size: 1.5rem; }
+.room-head p { margin: 0; }
+.code { letter-spacing: 0.15em; font-size: 1.05rem; }
+
+/* Placar */
+.board h2 { text-align: center; }
+.crosses { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.crosses.many { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+.side { text-align: center; }
+.side-name { font-weight: 600; margin-top: 4px; overflow-wrap: anywhere; }
+.score { font-size: 2rem; font-weight: 700; line-height: 1; }
+
+.cross { width: 100%; max-width: 160px; height: auto; }
+.cross line { stroke: var(--muted); stroke-width: 4; stroke-linecap: round; }
+.cross .ball { fill: var(--card); stroke: var(--ball); stroke-width: 3; }
+.cross .ball.on { fill: var(--ball); }
+.cross.winner .ball.on { fill: var(--win); stroke: var(--win); }
+
+.starter { margin-top: 16px; }
+.starter p { margin: 0 0 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { background: transparent; color: var(--text); border-color: var(--line); }
+.chip.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+.win-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.win-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.win-name { grid-column: 1 / -1; font-weight: 600; font-size: 0.9rem; }
+.win-group button { padding: 14px 8px; }
+
+.actions { margin-top: 12px; text-align: center; }
+
+.result { text-align: center; margin: 16px 0 8px; }
+.result .big { font-size: 1.25rem; font-weight: 700; margin: 0; }
+.lambreta { color: var(--win); font-weight: 700; margin: 4px 0 0; }
+
+.hands { margin-top: 12px; }
+.hands summary { cursor: pointer; color: var(--muted); }
+.hands ol { margin: 8px 0 0; padding-left: 1.6em; }
+
+.seating { margin: 0; padding-left: 0; list-style: none; }
+.seating li { padding: 4px 0; }
+
+.table-wrap { overflow-x: auto; }
+.stats-table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+.stats-table th, .stats-table td {
+  padding: 6px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.stats-table th:first-child, .stats-table td:first-child { text-align: left; }
+.stats-table th { color: var(--muted); font-weight: 600; }
+
+.day ul { margin: 0; padding-left: 1.2em; }

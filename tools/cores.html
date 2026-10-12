@@ -1,0 +1,308 @@
+<title>Cores do Placar</title>
+<style>
+/* Layout: controles no topo, depois os dois temas do app lado a lado (empilhados no celular), um cartão de amostra por cor. */
+:root {
+  --bg: #f4f1ea;
+  --fg: #1f1d1a;
+  --muted: #6b665d;
+  --line: #d9d3c7;
+  --panel: #fffdf8;
+  --ok: #1d6b4f;
+  --bad: #b3261e;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #151412; --fg: #f1ede4; --muted: #a39d92; --line: #3a3732; --panel: #1f1d1a;
+    --ok: #4fb589; --bad: #ff8a80; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #151412; --fg: #f1ede4; --muted: #a39d92; --line: #3a3732; --panel: #1f1d1a;
+  --ok: #4fb589; --bad: #ff8a80; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.45 var(--font); padding-inline: 16px; padding-block: 16px 48px; }
+.wrap { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-size: 1.4rem; margin: 0; text-wrap: balance; }
+h2 { font-size: 1.05rem; margin: 0; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.lead { max-width: 65ch; display: flex; flex-direction: column; gap: 6px; }
+
+.controls { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.control { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.control label { font-weight: 600; font-size: 0.9rem; display: flex; justify-content: space-between; gap: 8px; }
+.control output { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 400; }
+.control input { width: 100%; accent-color: var(--ok); }
+.control small { color: var(--muted); font-size: 0.8rem; }
+
+.summary { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; }
+.summary strong { font-variant-numeric: tabular-nums; }
+.values { font-family: var(--mono); font-size: 0.85rem; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto; white-space: pre; }
+
+.themes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+/* Os painéis são amostras dos temas do app: cada um usa as cores fixas daquele tema. */
+.theme { border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.theme.light { background: #fffdf8; color: #1f1d1a; border: 1px solid #d9d3c7; --t-muted: #6b665d; --t-line: #d9d3c7; --t-ok: #1d6b4f; --t-bad: #b3261e; }
+.theme.dark { background: #1f1d1a; color: #f1ede4; border: 1px solid #3a3732; --t-muted: #a39d92; --t-line: #3a3732; --t-ok: #4fb589; --t-bad: #ff8a80; }
+.theme h2 { display: flex; justify-content: space-between; align-items: baseline; }
+.theme h2 span { font-weight: 400; font-size: 0.85rem; color: var(--t-muted); }
+
+.row { display: grid; grid-template-columns: 64px 1fr; gap: 4px 12px; align-items: center; padding-block: 8px; border-top: 1px solid var(--t-line); }
+.row svg.cross { width: 64px; height: 64px; grid-row: span 2; }
+.row .name { font-weight: 600; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.row .name small { font-weight: 400; color: var(--t-muted); font-size: 0.8rem; }
+.row .info { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; min-width: 0; }
+.squares { display: flex; gap: 4px; }
+.squares svg { width: 22px; height: 22px; }
+.ratios { display: flex; flex-wrap: wrap; gap: 4px; font-family: var(--mono); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.ratio { padding: 1px 5px; border-radius: 4px; border: 1px solid var(--t-line); white-space: nowrap; }
+.ratio.ok { color: var(--t-ok); }
+.ratio.bad { color: var(--t-bad); border-color: currentColor; font-weight: 700; }
+
+.finals { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; text-align: center; font-size: 0.8rem; }
+.finals svg { width: 72px; height: 72px; }
+.finals div { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+
+.similar { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; }
+.legend { display: grid; gap: 4px; font-size: 0.85rem; color: var(--muted); max-width: 70ch; }
+.legend b { color: var(--fg); }
+</style>
+
+<div class="wrap">
+  <header class="lead">
+    <h1>Cores do Placar</h1>
+    <p class="muted">Cada cruz mostra, em ordem: batida, fechado, fechado, casa vazia. Os quadrados são a fileira de mãos: batida, fechado, empate, batida. Mexa nos controles até todos os números ficarem verdes nos dois temas e as cores continuarem fáceis de separar no celular.</p>
+  </header>
+
+  <section class="controls" aria-label="Controles">
+    <div class="control">
+      <label for="lsLight">Casca, tema claro <output id="lsLightOut"></output></label>
+      <input id="lsLight" type="range" min="0.30" max="0.75" step="0.01" value="0.50">
+      <small>Claridade OKLCH da cor cheia sobre fundo claro.</small>
+    </div>
+    <div class="control">
+      <label for="lsDark">Casca, tema escuro <output id="lsDarkOut"></output></label>
+      <input id="lsDark" type="range" min="0.50" max="0.90" step="0.01" value="0.74">
+      <small>Claridade OKLCH da cor cheia sobre fundo escuro.</small>
+    </div>
+    <div class="control">
+      <label for="core">Miolo do fechado <output id="coreOut"></output></label>
+      <input id="core" type="range" min="5" max="70" step="1" value="25">
+      <small>Quanto da cor entra no miolo; o resto é o fundo do cartão.</small>
+    </div>
+    <div class="control">
+      <label for="stroke">Espessura da casca <output id="strokeOut"></output></label>
+      <input id="stroke" type="range" min="2" max="6" step="0.5" value="4.5">
+      <small>A casa vazia usa 3 (como hoje no app).</small>
+    </div>
+  </section>
+
+  <section class="summary" aria-live="polite">
+    <h2>Resultado</h2>
+    <span id="passCount"></span>
+    <span class="muted" id="worst"></span>
+  </section>
+
+  <section class="legend">
+    <span><b>casca×fundo ≥ 3</b>: a bolinha se destaca do cartão (mínimo do WCAG para elementos gráficos).</span>
+    <span><b>casca×miolo ≥ 2</b>: dá para ver que o fechado tem borda e miolo diferentes.</span>
+    <span><b>miolo×fundo ≥ 1,3</b>: o miolo do fechado não parece a casa vazia.</span>
+  </section>
+
+  <div class="themes">
+    <section class="theme light" id="themeLight"></section>
+    <section class="theme dark" id="themeDark"></section>
+  </div>
+
+  <section class="lead">
+    <h2>Cores parecidas</h2>
+    <p class="muted">Pares com distância OKLab abaixo de 0,10 no mesmo tema, incluindo as cores reservadas (dourado, vermelho, empate).</p>
+    <div class="similar" id="similar"></div>
+  </section>
+
+  <section class="lead">
+    <h2>Valores para o app</h2>
+    <div class="values" id="values"></div>
+  </section>
+</div>
+
+<script>
+// Paleta proposta: matiz e croma OKLCH. dl desloca a claridade de cada cor para vizinhas de matiz
+// (azul/ciano, turquesa/verde/lima) se separarem também pelo claro-escuro. Laranja saiu: ficava entre
+// o vermelho e o dourado reservados.
+const PALETTE = [
+  { name: "Azul",     h: 262, c: 0.17, dl: -0.06 },
+  { name: "Ciano",    h: 210, c: 0.14, dl: 0.06 },
+  { name: "Turquesa", h: 178, c: 0.12, dl: -0.08 },
+  { name: "Verde",    h: 145, c: 0.16, dl: 0.02 },
+  { name: "Lima",     h: 122, c: 0.15, dl: 0.12 },
+  { name: "Roxo",     h: 305, c: 0.15, dl: -0.02 },
+  { name: "Magenta",  h: 345, c: 0.17, dl: 0.00 },
+  { name: "Marrom",   h: 55,  c: 0.07, dl: -0.12 },
+];
+const THEMES = {
+  light: { card: "#fffdf8", ball: "#1f1d1a", line: "#6b665d", gold: "#b8860b", red: "#b3261e", lose: "#948f86", tie: [0.62, 0.03, 250] },
+  dark:  { card: "#1f1d1a", ball: "#f1ede4", line: "#a39d92", gold: "#e0b44c", red: "#ff8a80", lose: "#7a766e", tie: [0.55, 0.03, 250] },
+};
+
+// ---- conversões de cor (OKLab/OKLCH <-> sRGB) ----
+const toLin = v => v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+const toGam = v => v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055;
+function hexToLin(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(v => toLin(v / 255));
+}
+function linToHex(rgb) {
+  return "#" + rgb.map(v => Math.round(Math.min(1, Math.max(0, toGam(v))) * 255).toString(16).padStart(2, "0")).join("");
+}
+function oklabToLin([L, a, b]) {
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3;
+  return [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s,
+  ];
+}
+function linToOklab([r, g, b]) {
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [
+    0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s,
+  ];
+}
+// OKLCH -> sRGB linear, reduzindo o croma até caber no sRGB.
+function oklchToLin(L, C, h) {
+  const rad = h * Math.PI / 180;
+  let c = C;
+  for (let i = 0; i < 30; i++) {
+    const rgb = oklabToLin([L, c * Math.cos(rad), c * Math.sin(rad)]);
+    if (rgb.every(v => v >= -0.0005 && v <= 1.0005)) return rgb.map(v => Math.min(1, Math.max(0, v)));
+    c *= 0.93;
+  }
+  return oklabToLin([L, 0, 0]);
+}
+const lum = ([r, g, b]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+const mixLab = (a, b, t) => oklabToLin(linToOklab(a).map((v, i) => v + (linToOklab(b)[i] - v) * t));
+const dist = (a, b) => { const x = linToOklab(a), y = linToOklab(b); return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]); };
+
+// ---- desenho ----
+const ENDS = [[50, 14], [86, 50], [50, 86], [14, 50]];
+// balls: lista de "b" (batida), "f" (fechado) ou "" (vazia)
+function crossSvg(t, balls, shell, core, sw, lineColor) {
+  const arms = `<line x1="50" y1="14" x2="50" y2="86" stroke="${lineColor}" stroke-width="4" stroke-linecap="round"/>` +
+               `<line x1="14" y1="50" x2="86" y2="50" stroke="${lineColor}" stroke-width="4" stroke-linecap="round"/>`;
+  const circles = ENDS.map(([cx, cy], i) => {
+    const k = balls[i] || "";
+    if (k === "b") return `<circle cx="${cx}" cy="${cy}" r="10" fill="${shell}" stroke="${shell}" stroke-width="${sw}"/>`;
+    if (k === "f") return `<circle cx="${cx}" cy="${cy}" r="10" fill="${core}" stroke="${shell}" stroke-width="${sw}"/>`;
+    return `<circle cx="${cx}" cy="${cy}" r="10" fill="${t.card}" stroke="${t.ball}" stroke-width="3"/>`;
+  }).join("");
+  return `<svg class="cross" viewBox="0 0 100 100" role="img" aria-label="cruz">${arms}${circles}</svg>`;
+}
+function squareSvg(kind, shell, core, sw, tie) {
+  if (kind === "=") {
+    return `<svg viewBox="0 0 22 22" role="img" aria-label="empate"><rect x="1" y="1" width="20" height="20" rx="6" fill="${tie}"/>` +
+           `<text x="11" y="15.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="system-ui">=</text></svg>`;
+  }
+  const inset = sw / 2 * 0.55;
+  const fill = kind === "b" ? shell : core;
+  return `<svg viewBox="0 0 22 22" role="img" aria-label="${kind === "b" ? "batida" : "fechado"}"><rect x="${1 + inset}" y="${1 + inset}" width="${20 - 2 * inset}" height="${20 - 2 * inset}" rx="6" fill="${fill}" stroke="${shell}" stroke-width="${sw * 0.55}"/></svg>`;
+}
+const fmt = v => v.toFixed(2).replace(".", ",");
+function ratio(label, v, min) {
+  return `<span class="ratio ${v >= min ? "ok" : "bad"}">${label} ${fmt(v)}</span>`;
+}
+
+function render() {
+  const p = {
+    light: +document.getElementById("lsLight").value,
+    dark: +document.getElementById("lsDark").value,
+    core: +document.getElementById("core").value / 100,
+    sw: +document.getElementById("stroke").value,
+  };
+  document.getElementById("lsLightOut").textContent = p.light.toFixed(2);
+  document.getElementById("lsDarkOut").textContent = p.dark.toFixed(2);
+  document.getElementById("coreOut").textContent = Math.round(p.core * 100) + "%";
+  document.getElementById("strokeOut").textContent = p.sw;
+
+  let pass = 0, total = 0, worst = null;
+  const similar = [];
+  const shellsByTheme = {};
+
+  for (const key of ["light", "dark"]) {
+    const t = THEMES[key];
+    const card = hexToLin(t.card);
+    const L = p[key];
+    const tie = linToHex(oklchToLin(...t.tie));
+    const shells = [];
+    let html = `<h2>Tema ${key === "light" ? "claro" : "escuro"} <span>fundo ${t.card}</span></h2>`;
+
+    for (const col of PALETTE) {
+      const shellLin = oklchToLin(L + (col.dl || 0), col.c, col.h);
+      const coreLin = mixLab(card, shellLin, p.core);
+      const shell = linToHex(shellLin), core = linToHex(coreLin);
+      shells.push({ name: col.name, lin: shellLin });
+      const r1 = contrast(shellLin, card), r2 = contrast(shellLin, coreLin), r3 = contrast(coreLin, card);
+      const ok = r1 >= 3 && r2 >= 2 && r3 >= 1.3;
+      total++; if (ok) pass++;
+      const score = Math.min(r1 / 3, r2 / 2, r3 / 1.3);
+      if (!worst || score < worst.score) worst = { score, name: col.name, theme: key };
+      html += `<div class="row">
+        ${crossSvg(t, ["b", "f", "f", ""], shell, core, p.sw, t.line)}
+        <div class="name">${col.name} <small>${shell} · miolo ${core}</small></div>
+        <div class="info">
+          <span class="squares">${["b", "f", "=", "b"].map(k => squareSvg(k, shell, core, p.sw, tie)).join("")}</span>
+          <span class="ratios">${ratio("casca×fundo", r1, 3)}${ratio("casca×miolo", r2, 2)}${ratio("miolo×fundo", r3, 1.3)}</span>
+        </div>
+      </div>`;
+    }
+
+    // Estados do fim do boi
+    const gold = hexToLin(t.gold), goldCore = linToHex(mixLab(card, gold, p.core));
+    const lose = hexToLin(t.lose), loseCore = linToHex(mixLab(card, lose, p.core));
+    const lambreta = crossSvg(t, ["", "", "", ""], "", "", p.sw, t.red);
+    html += `<div class="row" style="grid-template-columns:1fr">
+      <div class="name">Fim do boi</div>
+      <div class="finals">
+        <div>${crossSvg(t, ["b", "f", "b", "b"], t.gold, goldCore, p.sw, t.line)}vencedor</div>
+        <div>${crossSvg(t, ["b", "f", "", ""], t.lose, loseCore, p.sw, t.line)}perdedor</div>
+        <div>${lambreta}lambreta</div>
+      </div>
+      <div class="ratios">${ratio("dourado×fundo", contrast(gold, card), 3)}${ratio("perdedor×fundo", contrast(lose, card), 3)}${ratio("empate×fundo", contrast(hexToLin(tie), card), 3)}</div>
+    </div>`;
+    document.getElementById(key === "light" ? "themeLight" : "themeDark").innerHTML = html;
+
+    const all = shells.concat([
+      { name: "dourado (reservado)", lin: gold },
+      { name: "vermelho (reservado)", lin: hexToLin(t.red) },
+      { name: "empate (reservado)", lin: hexToLin(tie) },
+    ]);
+    for (let i = 0; i < all.length; i++)
+      for (let j = i + 1; j < all.length; j++) {
+        if (i >= shells.length && j >= shells.length) continue;
+        const d = dist(all[i].lin, all[j].lin);
+        if (d < 0.10) similar.push(`${key === "light" ? "Claro" : "Escuro"}: ${all[i].name} × ${all[j].name} (${fmt(d)})`);
+      }
+    shellsByTheme[key] = shells.map(s => `${s.name.padEnd(11)} ${linToHex(s.lin)}`);
+  }
+
+  document.getElementById("passCount").innerHTML = `<strong>${pass} de ${total}</strong> combinações passam nos três testes`;
+  document.getElementById("worst").textContent = worst && worst.score < 1 ? `Pior caso: ${worst.name} no tema ${worst.theme === "light" ? "claro" : "escuro"}` : "Todas passam.";
+  document.getElementById("similar").innerHTML = similar.length ? similar.map(s => `<span>${s}</span>`).join("") : `<span class="muted">Nenhum par parecido demais.</span>`;
+  document.getElementById("values").textContent =
+    `casca claro L=${p.light.toFixed(2)}  casca escuro L=${p.dark.toFixed(2)}  miolo=${Math.round(p.core * 100)}%  espessura=${p.sw}\n\n` +
+    `claro\n${shellsByTheme.light.join("\n")}\n\nescuro\n${shellsByTheme.dark.join("\n")}`;
+}
+
+for (const id of ["lsLight", "lsDark", "core", "stroke"]) document.getElementById(id).addEventListener("input", render);
+render();
+</script>

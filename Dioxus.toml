@@ -1,0 +1,5 @@
+[application]
+name = "placar"
+
+[web.app]
+title = "Placar de Dominó"

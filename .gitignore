@@ -1,0 +1,16 @@
+# Build
+/target
+/dist
+
+# IDE
+/.idea
+.DS_Store
+
+# Artefatos dos testes (capturas de tela e cookies de sessão)
+/tools/*.png
+/tools/jar*.txt
+/tools/sse.txt
+
+# Bancos locais
+*.db
+*.db-*
