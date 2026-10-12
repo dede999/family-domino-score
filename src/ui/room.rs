@@ -4,6 +4,7 @@ use super::{Cross, CrossEnd, current_user, sleep_ms, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
 use crate::model::{BoiView, Mode, Outcome, RoomView, format_date};
+use crate::palette;
 use crate::rules::{self, SideResult};
 use dioxus::prelude::*;
 
@@ -268,6 +269,10 @@ fn Scoreboard(view: RoomView, boi: BoiView, on_change: EventHandler<()>) -> Elem
                 }
             }
 
+            if !boi.hands.is_empty() {
+                HandStrip { view: view.clone(), boi: boi.clone(), colors: colors.clone() }
+            }
+
             if finished {
                 FinalResult { view: view.clone(), boi: boi.clone() }
                 if view.can_edit {
@@ -350,9 +355,6 @@ fn Scoreboard(view: RoomView, boi: BoiView, on_change: EventHandler<()>) -> Elem
                 }
             }
 
-            if !boi.hands.is_empty() {
-                HandList { view: view.clone(), boi: boi.clone() }
-            }
         }
     }
 }
@@ -385,33 +387,59 @@ fn FinalResult(view: RoomView, boi: BoiView) -> Element {
     }
 }
 
+/// Mãos do boi, na ordem em que aconteceram: quadrado cheio na cor de quem
+/// bateu, casca com miolo claro no fechado, cinza com "=" no empate. A última
+/// fica destacada. Tocar num quadrado mostra o que aconteceu naquela mão.
 #[component]
-fn HandList(view: RoomView, boi: BoiView) -> Element {
+fn HandStrip(view: RoomView, boi: BoiView, colors: Vec<u8>) -> Element {
+    let mut selected = use_signal(|| None::<usize>);
+    let last = boi.hands.len() - 1;
+    // Se a mão escolhida foi desfeita, esquece a escolha.
+    let shown = selected().filter(|&i| i <= last);
     rsx! {
-        details { class: "hands",
-            summary { "Mãos deste boi ({boi.hands.len()})" }
-            ol { reversed: true,
-                for (i, hand) in boi.hands.iter().enumerate().rev() {
-                    li { key: "{i}",
-                        {
-                            let starter = view.player_name(boi.seating[hand.starter_seat]);
-                            match (hand.outcome, hand.winner_side) {
-                                (Outcome::Empate, _) | (_, None) => {
-                                    format!("{starter} saiu · fechado empatado")
-                                }
-                                (Outcome::Batida, Some(s)) => {
-                                    format!("{starter} saiu · {} bateu", view.side_name(&boi, s))
-                                }
-                                (Outcome::Fechado, Some(s)) => {
-                                    format!("{starter} saiu · {} ganhou no fechado", view.side_name(&boi, s))
-                                }
-                            }
+        div { class: "hand-strip", role: "group", "aria-label": "Mãos deste boi",
+            for (i, hand) in boi.hands.iter().enumerate() {
+                button {
+                    key: "{i}",
+                    r#type: "button",
+                    class: {
+                        let kind = match hand.outcome {
+                            Outcome::Batida => "batida",
+                            Outcome::Fechado => "fechado",
+                            Outcome::Empate => "empate",
+                        };
+                        let mut c = format!("hand-square {kind}");
+                        if i == last {
+                            c.push_str(" last");
                         }
-                    }
+                        if shown == Some(i) {
+                            c.push_str(" on");
+                        }
+                        c
+                    },
+                    style: hand.winner_side.map(|s| palette::style(colors[s])),
+                    title: hand_text(&view, &boi, i),
+                    "aria-pressed": shown == Some(i),
+                    onclick: move |_| selected.set(if shown == Some(i) { None } else { Some(i) }),
+                    if hand.outcome == Outcome::Empate { "=" }
                 }
             }
         }
+        if let Some(i) = shown {
+            p { class: "hand-detail muted small", {hand_text(&view, &boi, i)} }
+        }
     }
+}
+
+fn hand_text(view: &RoomView, boi: &BoiView, i: usize) -> String {
+    let hand = &boi.hands[i];
+    let starter = view.player_name(boi.seating[hand.starter_seat]);
+    let what = match (hand.outcome, hand.winner_side) {
+        (Outcome::Empate, _) | (_, None) => "fechado empatado".to_string(),
+        (Outcome::Batida, Some(s)) => format!("{} bateu", view.side_name(boi, s)),
+        (Outcome::Fechado, Some(s)) => format!("{} ganhou no fechado", view.side_name(boi, s)),
+    };
+    format!("Mão {}: {starter} saiu, {what}", i + 1)
 }
 
 #[component]

@@ -167,6 +167,11 @@ try:
     wait_text("Lambreta reversa em Pai & Tio!")
     shot("3-fim-do-boi")
     ok("fim do boi com lambreta reversa")
+    assert len(s("POST", "/elements", {"using": "xpath", "value": "//div[@class='hand-strip']/button"})) == 6
+    click("//div[@class='hand-strip']/button[1]")
+    wait_text("Mão 1: Pai saiu, fechado empatado")
+    shot("3b-detalhe-mao")
+    ok("fileira com as 6 mãos e detalhe ao tocar")
 
     # 5. Desfazer volta o boi
     click(btn("Desfazer última mão"))
@@ -188,7 +193,7 @@ try:
                     f"{APP}/api/salas/{code}/maos", "-d",
                     json.dumps({"expected_hands": 0, "starter_seat": 0, "outcome": "Batida", "winner_side": 1})],
                    capture_output=True)
-    wait_text("Mãos deste boi (1)", timeout=8)
+    find("//div[@class='hand-strip']/button[1]", timeout=8)
     ok("placar atualizou sozinho (tempo real)")
 
     # 7. Estatísticas e histórico

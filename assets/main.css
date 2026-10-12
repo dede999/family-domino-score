@@ -12,6 +12,7 @@
   --lose: #948f86;
   --lose-core: #e3e0da;
   --lambreta: #b3261e;
+  --tie: #798898;
   --error: #b3261e;
   color-scheme: light;
 
@@ -39,6 +40,7 @@
     --lose: #7a766e;
     --lose-core: #34312d;
     --lambreta: #ff8a80;
+    --tie: #657383;
     --error: #ff8a80;
     color-scheme: dark;
   }
@@ -177,9 +179,9 @@ button.primary { width: 100%; font-size: 1.05rem; padding: 14px; }
 
 /* Cores da paleta: o elemento recebe --cl/--kl/--cd/--kd no style (ver src/palette.rs)
    e o CSS escolhe a versão do tema: --c é a cor cheia, --k o miolo do fechado. */
-.swatch, .cross { --c: var(--cl, var(--ball)); --k: var(--kl, var(--card)); }
+.swatch, .cross, .hand-square { --c: var(--cl, var(--ball)); --k: var(--kl, var(--card)); }
 @media (prefers-color-scheme: dark) {
-  .swatch, .cross { --c: var(--cd, var(--ball)); --k: var(--kd, var(--card)); }
+  .swatch, .cross, .hand-square { --c: var(--cd, var(--ball)); --k: var(--kd, var(--card)); }
 }
 
 .swatch {
@@ -244,8 +246,25 @@ button.swatch:disabled { opacity: 0.2; cursor: default; }
 .result .big { font-size: 1.25rem; font-weight: 700; }
 .lambreta { color: var(--win); font-weight: 700; }
 
-.hands summary { cursor: pointer; color: var(--muted); }
-.hands ol { margin-top: var(--sp-2); padding-left: 1.6em; }
+/* Fileira de mãos do boi. Mesma regra das bolinhas: cheio = batida,
+   casca + miolo claro = fechado. */
+.hand-strip { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.hand-square {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 9px;
+  border: 3.5px solid var(--c);
+  background: var(--c);
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+}
+.hand-square.fechado { background: var(--k); }
+.hand-square.empate { background: var(--tie); border-color: var(--tie); }
+.hand-square.last { outline: 2px solid var(--text); outline-offset: 2px; }
+.hand-square.on { transform: scale(1.15); }
+.hand-detail { text-align: center; }
 
 .seating { padding-left: 0; list-style: none; }
 .seating li { padding: var(--sp-1) 0; }
