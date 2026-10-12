@@ -20,7 +20,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
    direita.
 3. [x] Botões apagados até o app carregar (ver Infra).
 4. [x] Espaçamento, cores e bolinhas.
-5. Mãos do boi como fileira de quadrados (próximo), depois o histórico.
+5. Mãos do boi como fileira de quadrados (em andamento).
+6. Histórico com "ver mais".
+7. Estatísticas por período.
 
 ## Visual
 
@@ -92,6 +94,25 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     configurável).
   - A consulta no servidor passa a ter limite e paginação, para não mandar todo
     o histórico a cada atualização via SSE.
+
+## Estatísticas por período (pedido em 2026-10-12)
+
+- [ ] **Dados da sala por dia, mês e ano.** Seletor de período (hoje, um
+  dia, um mês, um ano) com:
+  - **Destaques do período:** quem fez melhor no dia, no mês, no ano.
+  - **Primeiras do ano:** quem saiu primeiro em 2027, quem ganhou a 1ª mão, o
+    1º boi, a 1ª lambreta e a 1ª lambreta reversa do ano (e quem levou).
+  - Os números que já existem (bois, mãos, batidas, fechados, lambretas),
+    filtrados pelo período.
+  - **(em discussão)** "Fez melhor" precisa de critério. Proposta: mais bois
+    ganhos; empate desempata por % de mãos ganhas. Com poucos jogos num dia,
+    isso varia muito, então mostrar junto quantos bois cada um jogou.
+  - **(em discussão)** Nas duplas, também mostrar a melhor dupla, além do
+    melhor jogador.
+  - Notas técnicas: as datas seguem o fuso de Brasília (`format_date`). O
+    cálculo vai para o servidor, num endpoint próprio, porque o histórico vai
+    passar a carregar só 10 bois por vez. Mão tem `created_at` e boi tem
+    `started_at`, então já dá para filtrar sem mudar o banco.
 
 ## Infra
 
