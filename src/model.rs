@@ -1,5 +1,6 @@
 //! Tipos trocados entre o servidor e o navegador.
 
+use crate::palette;
 use crate::rules::{self, BoiState, PlayerStats};
 use serde::{Deserialize, Serialize};
 
@@ -81,6 +82,8 @@ pub struct Player {
     pub name: String,
     /// Conta vinculada. `None` para jogador avulso.
     pub username: Option<String>,
+    /// Índice na paleta. Só vale no modo individual; nas duplas a cor é da dupla.
+    pub color: u8,
 }
 
 /// Jogador na criação ou edição de uma sala.
@@ -91,6 +94,80 @@ pub struct PlayerInput {
     pub name: String,
     /// Vincular a uma conta existente pelo nome de usuário.
     pub username: Option<String>,
+    /// Índice na paleta (modo individual). `None` = o servidor escolhe uma livre.
+    pub color: Option<u8>,
+}
+
+/// Cores de uma dupla. A dupla é o par de jogadores, sem ordem: guardada com
+/// o menor id primeiro, vale em qualquer boi em que os dois joguem juntos.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PairColors {
+    pub players: (i64, i64),
+    pub primary: u8,
+    /// Reserva: usada quando a outra dupla do boi tem a mesma primária e
+    /// escolheu antes. Sempre diferente da primária.
+    pub secondary: u8,
+    /// Quando a primária foi escolhida (segundos desde 1970).
+    pub chosen_at: i64,
+}
+
+pub fn pair_key(a: i64, b: i64) -> (i64, i64) {
+    (a.min(b), a.max(b))
+}
+
+/// Ids dos jogadores de cada lado, na ordem dos lados.
+pub fn sides_of(mode: Mode, seating: &[i64]) -> Vec<Vec<i64>> {
+    let mut sides = vec![Vec::new(); rules::side_count(mode, seating.len())];
+    for (seat, &id) in seating.iter().enumerate() {
+        sides[rules::side_of(mode, seat)].push(id);
+    }
+    sides
+}
+
+/// Cor de cada lado para uma roda de jogadores.
+///
+/// Individual: a cor de cada jogador. Duplas: a primária de cada dupla; se as
+/// duas tiverem a mesma, quem a escolheu por último usa a secundária. Dupla
+/// que ainda não tem cor recebe a primeira livre.
+pub fn resolve_side_colors(
+    mode: Mode,
+    seating: &[i64],
+    players: &[Player],
+    pairs: &[PairColors],
+) -> Vec<u8> {
+    let sides = sides_of(mode, seating);
+    match mode {
+        Mode::Individual => sides
+            .iter()
+            .map(|ids| {
+                ids.first()
+                    .and_then(|id| players.iter().find(|p| p.id == *id))
+                    .map_or(0, |p| p.color)
+            })
+            .collect(),
+        Mode::Duplas => {
+            let found: Vec<Option<&PairColors>> = sides
+                .iter()
+                .map(|ids| match ids[..] {
+                    [a, b] => pairs.iter().find(|p| p.players == pair_key(a, b)),
+                    _ => None,
+                })
+                .collect();
+            match (found[0], found[1]) {
+                (Some(a), Some(b)) if a.primary == b.primary => {
+                    if b.chosen_at >= a.chosen_at {
+                        vec![a.primary, b.secondary]
+                    } else {
+                        vec![a.secondary, b.primary]
+                    }
+                }
+                (Some(a), Some(b)) => vec![a.primary, b.primary],
+                (Some(a), None) => vec![a.primary, palette::first_free(&[a.primary])],
+                (None, Some(b)) => vec![palette::first_free(&[b.primary]), b.primary],
+                (None, None) => vec![0, 1],
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -100,6 +177,8 @@ pub struct BoiView {
     /// Ids dos jogadores na ordem dos assentos, congelada no início do boi.
     pub seating: Vec<i64>,
     pub hands: Vec<Hand>,
+    /// Cor de cada lado, congelada no início do boi. Vazio em bois antigos.
+    pub colors: Vec<u8>,
     /// Início do boi em segundos desde 1970 (UTC).
     pub started_at: i64,
 }
@@ -116,6 +195,8 @@ pub struct RoomView {
     pub players: Vec<Player>,
     /// Do mais antigo para o mais recente. O último é o boi atual.
     pub bois: Vec<BoiView>,
+    /// Cores das duplas já formadas nesta sala.
+    pub pairs: Vec<PairColors>,
 }
 
 impl RoomView {
@@ -127,6 +208,15 @@ impl RoomView {
         self.player(id)
             .map(|p| p.name.clone())
             .unwrap_or_else(|| "?".into())
+    }
+
+    /// Cor de cada lado de um boi: a congelada, ou a atual em bois antigos.
+    pub fn side_colors(&self, boi: &BoiView) -> Vec<u8> {
+        if boi.colors.len() == rules::side_count(self.mode, boi.seating.len()) {
+            boi.colors.clone()
+        } else {
+            resolve_side_colors(self.mode, &boi.seating, &self.players, &self.pairs)
+        }
     }
 
     pub fn current(&self) -> Option<&BoiView> {
@@ -182,6 +272,46 @@ pub fn format_date(epoch_secs: i64) -> String {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
+    fn pair(a: i64, b: i64, primary: u8, secondary: u8, chosen_at: i64) -> PairColors {
+        PairColors { players: pair_key(a, b), primary, secondary, chosen_at }
+    }
+
+    // Roda das duplas: assentos 0 e 2 são o lado A, 1 e 3 o lado B.
+    const RODA: [i64; 4] = [1, 2, 3, 4];
+
+    #[test]
+    fn duplas_com_cores_diferentes() {
+        let pairs = [pair(1, 3, 5, 0, 10), pair(2, 4, 2, 0, 20)];
+        assert_eq!(resolve_side_colors(Mode::Duplas, &RODA, &[], &pairs), vec![5, 2]);
+    }
+
+    #[test]
+    fn mesma_primaria_quem_escolheu_por_ultimo_usa_a_reserva() {
+        let pairs = [pair(3, 1, 5, 6, 10), pair(2, 4, 5, 7, 20)];
+        assert_eq!(resolve_side_colors(Mode::Duplas, &RODA, &[], &pairs), vec![5, 7]);
+        let pairs = [pair(1, 3, 5, 6, 30), pair(2, 4, 5, 7, 20)];
+        assert_eq!(resolve_side_colors(Mode::Duplas, &RODA, &[], &pairs), vec![6, 5]);
+    }
+
+    #[test]
+    fn dupla_nova_recebe_cor_livre() {
+        let pairs = [pair(2, 4, 0, 1, 10)];
+        assert_eq!(resolve_side_colors(Mode::Duplas, &RODA, &[], &pairs), vec![1, 0]);
+        assert_eq!(resolve_side_colors(Mode::Duplas, &RODA, &[], &[]), vec![0, 1]);
+    }
+
+    #[test]
+    fn individual_usa_a_cor_de_cada_jogador() {
+        let p = |id, color| Player { id, name: String::new(), username: None, color };
+        let players = [p(1, 3), p(2, 7), p(3, 0)];
+        assert_eq!(
+            resolve_side_colors(Mode::Individual, &[2, 3, 1], &players, &[]),
+            vec![7, 0, 3]
+        );
+    }
+
     #[test]
     fn data_em_brasilia() {
         // 2026-10-12 02:00 UTC ainda é dia 11 em Brasília.

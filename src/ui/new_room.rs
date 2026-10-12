@@ -10,6 +10,7 @@ pub struct PlayerDraft {
     pub id: Option<i64>,
     pub name: String,
     pub username: String,
+    pub color: Option<u8>,
 }
 
 impl PlayerDraft {
@@ -19,6 +20,7 @@ impl PlayerDraft {
             id: self.id,
             name: self.name.trim().to_string(),
             username: (!username.is_empty()).then_some(username),
+            color: self.color,
         }
     }
 }
@@ -43,6 +45,7 @@ pub fn NewRoom() -> Element {
                     id: None,
                     name: u.display_name.clone(),
                     username: u.username.clone(),
+                    color: None,
                 };
             }
         }

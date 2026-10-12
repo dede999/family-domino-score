@@ -1,6 +1,10 @@
 //! Código só do servidor: banco (Turso/libsql), sessões e avisos em tempo real.
 
-use crate::model::{BoiView, Hand, Mode, Outcome, Player, RoomView, UserInfo};
+use crate::model::{
+    BoiView, Hand, Mode, Outcome, PairColors, Player, RoomView, UserInfo, pair_key,
+    resolve_side_colors, sides_of,
+};
+use crate::palette;
 use dioxus::fullstack::{HeaderMap, HttpError, ServerFnError, StatusCode};
 use libsql::{Connection, Database, params};
 use std::collections::HashMap;
@@ -57,6 +61,16 @@ CREATE TABLE IF NOT EXISTS maos (
     created_at   INTEGER NOT NULL DEFAULT (unixepoch()),
     UNIQUE (boi_id, seq)
 );
+-- Cores de cada dupla já formada. player_a < player_b.
+CREATE TABLE IF NOT EXISTS pairs (
+    room_id   INTEGER NOT NULL REFERENCES rooms(id),
+    player_a  INTEGER NOT NULL REFERENCES players(id),
+    player_b  INTEGER NOT NULL REFERENCES players(id),
+    color     INTEGER NOT NULL,
+    color2    INTEGER NOT NULL,
+    chosen_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    PRIMARY KEY (room_id, player_a, player_b)
+);
 CREATE INDEX IF NOT EXISTS players_room ON players(room_id);
 CREATE INDEX IF NOT EXISTS players_user ON players(user_id);
 CREATE INDEX IF NOT EXISTS bois_room ON bois(room_id);
@@ -87,12 +101,40 @@ pub async fn conn() -> Result<Connection, ServerFnError> {
                     libsql::Builder::new_local(path).build().await?
                 }
             };
-            db.connect()?.execute_batch(SCHEMA).await?;
+            let conn = db.connect()?;
+            conn.execute_batch(SCHEMA).await?;
+            migrate(&conn).await?;
             Ok::<_, libsql::Error>(db)
         })
         .await
         .map_err(db_err)?;
     db.connect().map_err(db_err)
+}
+
+/// Colunas acrescentadas depois da primeira versão do banco.
+async fn migrate(conn: &Connection) -> Result<(), libsql::Error> {
+    async fn has_column(conn: &Connection, table: &str, column: &str) -> Result<bool, libsql::Error> {
+        let mut rows = conn
+            .query(
+                "SELECT 1 FROM pragma_table_info(?1) WHERE name = ?2",
+                params![table, column],
+            )
+            .await?;
+        Ok(rows.next().await?.is_some())
+    }
+    if !has_column(conn, "players", "color").await? {
+        // Salas antigas: cada jogador ganha a cor do seu lugar, todas diferentes.
+        conn.execute_batch(
+            "ALTER TABLE players ADD COLUMN color INTEGER NOT NULL DEFAULT 0;
+             UPDATE players SET color = seat;",
+        )
+        .await?;
+    }
+    if !has_column(conn, "bois", "colors").await? {
+        conn.execute("ALTER TABLE bois ADD COLUMN colors TEXT NOT NULL DEFAULT '[]'", ())
+            .await?;
+    }
+    Ok(())
 }
 
 pub fn random_token(len: usize, alphabet: &[u8]) -> String {
@@ -237,7 +279,7 @@ pub struct PlayerRow {
 pub async fn room_players(conn: &Connection, room_id: i64) -> Result<Vec<PlayerRow>, ServerFnError> {
     let mut rows = conn
         .query(
-            "SELECT p.id, p.name, u.username, p.user_id FROM players p
+            "SELECT p.id, p.name, u.username, p.user_id, p.color FROM players p
              LEFT JOIN users u ON u.id = p.user_id
              WHERE p.room_id = ?1 ORDER BY p.seat",
             params![room_id],
@@ -251,6 +293,7 @@ pub async fn room_players(conn: &Connection, room_id: i64) -> Result<Vec<PlayerR
                 id: row.get(0).map_err(db_err)?,
                 name: row.get(1).map_err(db_err)?,
                 username: row.get(2).map_err(db_err)?,
+                color: row.get::<i64>(4).map_err(db_err)? as u8,
             },
             user_id: row.get(3).map_err(db_err)?,
         });
@@ -262,7 +305,7 @@ pub async fn room_players(conn: &Connection, room_id: i64) -> Result<Vec<PlayerR
 pub async fn room_bois(conn: &Connection, room_id: i64) -> Result<Vec<BoiView>, ServerFnError> {
     let mut rows = conn
         .query(
-            "SELECT id, seating, started_at FROM bois WHERE room_id = ?1 ORDER BY id",
+            "SELECT id, seating, started_at, colors FROM bois WHERE room_id = ?1 ORDER BY id",
             params![room_id],
         )
         .await
@@ -270,11 +313,13 @@ pub async fn room_bois(conn: &Connection, room_id: i64) -> Result<Vec<BoiView>, 
     let mut bois = Vec::new();
     while let Some(row) = rows.next().await.map_err(db_err)? {
         let seating: String = row.get(1).map_err(db_err)?;
+        let colors: String = row.get(3).map_err(db_err)?;
         bois.push(BoiView {
             id: row.get(0).map_err(db_err)?,
             number: bois.len() as u32 + 1,
             seating: serde_json::from_str(&seating).map_err(db_err)?,
             hands: Vec::new(),
+            colors: serde_json::from_str(&colors).map_err(db_err)?,
             started_at: row.get(2).map_err(db_err)?,
         });
     }
@@ -303,6 +348,83 @@ pub async fn room_bois(conn: &Connection, room_id: i64) -> Result<Vec<BoiView>, 
     Ok(bois)
 }
 
+pub async fn room_pairs(conn: &Connection, room_id: i64) -> Result<Vec<PairColors>, ServerFnError> {
+    let mut rows = conn
+        .query(
+            "SELECT player_a, player_b, color, color2, chosen_at FROM pairs WHERE room_id = ?1",
+            params![room_id],
+        )
+        .await
+        .map_err(db_err)?;
+    let mut pairs = Vec::new();
+    while let Some(row) = rows.next().await.map_err(db_err)? {
+        pairs.push(PairColors {
+            players: (row.get(0).map_err(db_err)?, row.get(1).map_err(db_err)?),
+            primary: row.get::<i64>(2).map_err(db_err)? as u8,
+            secondary: row.get::<i64>(3).map_err(db_err)? as u8,
+            chosen_at: row.get(4).map_err(db_err)?,
+        });
+    }
+    Ok(pairs)
+}
+
+/// Cor de cada lado para esta roda. Nas duplas, grava as duplas que ainda não
+/// têm cor, para a cor ficar estável a partir daqui.
+pub async fn settle_colors(
+    conn: &Connection,
+    room_id: i64,
+    mode: Mode,
+    seating: &[i64],
+) -> Result<Vec<u8>, ServerFnError> {
+    let players: Vec<Player> = room_players(conn, room_id)
+        .await?
+        .into_iter()
+        .map(|p| p.player)
+        .collect();
+    let pairs = room_pairs(conn, room_id).await?;
+    let colors = resolve_side_colors(mode, seating, &players, &pairs);
+    if mode == Mode::Duplas {
+        for (side, ids) in sides_of(mode, seating).iter().enumerate() {
+            let [a, b] = ids[..] else { continue };
+            let key = pair_key(a, b);
+            if pairs.iter().any(|p| p.players == key) {
+                continue;
+            }
+            let secondary = palette::first_free(&colors);
+            conn.execute(
+                "INSERT INTO pairs (room_id, player_a, player_b, color, color2) VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![room_id, key.0, key.1, colors[side] as i64, secondary as i64],
+            )
+            .await
+            .map_err(db_err)?;
+        }
+    }
+    Ok(colors)
+}
+
+/// Recalcula as cores do boi atual, se ele ainda não acabou: quem troca de cor
+/// no meio do boi vê a troca na hora. Bois encerrados mantêm as cores.
+pub async fn refresh_current_boi_colors(
+    conn: &Connection,
+    room_id: i64,
+    mode: Mode,
+) -> Result<(), ServerFnError> {
+    let Some(boi) = room_bois(conn, room_id).await?.pop() else {
+        return Ok(());
+    };
+    if crate::rules::evaluate(mode, boi.seating.len(), &boi.hands).finished() {
+        return Ok(());
+    }
+    let colors = settle_colors(conn, room_id, mode, &boi.seating).await?;
+    conn.execute(
+        "UPDATE bois SET colors = ?1 WHERE id = ?2",
+        params![serde_json::to_string(&colors).map_err(db_err)?, boi.id],
+    )
+    .await
+    .map_err(db_err)?;
+    Ok(())
+}
+
 pub async fn load_room_view(
     conn: &Connection,
     room: &RoomRow,
@@ -321,6 +443,7 @@ pub async fn load_room_view(
         can_edit,
         players: players.into_iter().map(|p| p.player).collect(),
         bois: room_bois(conn, room.id).await?,
+        pairs: room_pairs(conn, room.id).await?,
     })
 }
 

@@ -2,6 +2,7 @@ use dioxus::prelude::*;
 
 mod api;
 mod model;
+mod palette;
 // Parte das regras e dos tipos só é usada no servidor.
 #[cfg_attr(not(feature = "server"), allow(dead_code))]
 mod rules;

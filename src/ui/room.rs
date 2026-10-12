@@ -399,6 +399,7 @@ fn EditPlayers(view: RoomView, on_done: EventHandler<bool>) -> Element {
             id: Some(p.id),
             name: p.name.clone(),
             username: p.username.clone().unwrap_or_default(),
+            color: Some(p.color),
         })
         .collect();
     let players = use_signal(|| initial);

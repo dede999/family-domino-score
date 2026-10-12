@@ -207,6 +207,29 @@ fn validate_players(mode: Mode, players: &[PlayerInput]) -> Result<(), ServerFnE
     Ok(())
 }
 
+/// Cor de cada jogador: a escolhida, ou a primeira livre. No individual, todos
+/// jogam juntos, então as cores precisam ser diferentes.
+#[cfg(feature = "server")]
+fn assign_colors(players: &[PlayerInput]) -> Result<Vec<u8>, ServerFnError> {
+    let mut colors: Vec<Option<u8>> = players.iter().map(|p| p.color).collect();
+    for c in colors.iter().flatten() {
+        if !crate::palette::is_valid(*c) {
+            return Err(user_err(StatusCode::BAD_REQUEST, "Cor inválida."));
+        }
+    }
+    let chosen: Vec<u8> = colors.iter().flatten().copied().collect();
+    if (1..chosen.len()).any(|i| chosen[..i].contains(&chosen[i])) {
+        return Err(user_err(StatusCode::BAD_REQUEST, "Dois jogadores estão com a mesma cor."));
+    }
+    for i in 0..colors.len() {
+        if colors[i].is_none() {
+            let taken: Vec<u8> = colors.iter().flatten().copied().collect();
+            colors[i] = Some(crate::palette::first_free(&taken));
+        }
+    }
+    Ok(colors.into_iter().flatten().collect())
+}
+
 /// Resolve o usuário vinculado de cada jogador.
 #[cfg(feature = "server")]
 async fn resolve_links(
@@ -248,6 +271,7 @@ pub async fn create_room(
     }
     validate_players(mode, &players)?;
     let links = resolve_links(&conn, &players).await?;
+    let colors = assign_colors(&players)?;
 
     // Sem 0/O e 1/I para facilitar ditar o código.
     let code = random_token(6, b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789");
@@ -259,10 +283,10 @@ pub async fn create_room(
     .await
     .map_err(db_err)?;
     let room_id = tx.last_insert_rowid();
-    for (seat, (p, link)) in players.iter().zip(links).enumerate() {
+    for (seat, ((p, link), color)) in players.iter().zip(links).zip(colors).enumerate() {
         tx.execute(
-            "INSERT INTO players (room_id, name, user_id, seat) VALUES (?1, ?2, ?3, ?4)",
-            params![room_id, p.name.trim().to_string(), link, seat as i64],
+            "INSERT INTO players (room_id, name, user_id, seat, color) VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![room_id, p.name.trim().to_string(), link, seat as i64, color as i64],
         )
         .await
         .map_err(db_err)?;
@@ -290,9 +314,14 @@ pub async fn start_boi(code: String) -> Result<(), ServerFnError> {
         }
     }
     let seating: Vec<i64> = view.players.iter().map(|p| p.id).collect();
+    let colors = settle_colors(&conn, room.id, room.mode, &seating).await?;
     conn.execute(
-        "INSERT INTO bois (room_id, seating) VALUES (?1, ?2)",
-        params![room.id, serde_json::to_string(&seating).map_err(db_err)?],
+        "INSERT INTO bois (room_id, seating, colors) VALUES (?1, ?2, ?3)",
+        params![
+            room.id,
+            serde_json::to_string(&seating).map_err(db_err)?,
+            serde_json::to_string(&colors).map_err(db_err)?
+        ],
     )
     .await
     .map_err(db_err)?;
@@ -401,6 +430,7 @@ pub async fn update_players(code: String, players: Vec<PlayerInput>) -> Result<(
     }
     validate_players(room.mode, &players)?;
     let links = resolve_links(&conn, &players).await?;
+    let colors = assign_colors(&players)?;
 
     // Jogador que já jogou algum boi não pode ser removido, para não perder o histórico.
     let kept: Vec<i64> = players.iter().filter_map(|p| p.id).collect();
@@ -415,17 +445,24 @@ pub async fn update_players(code: String, players: Vec<PlayerInput>) -> Result<(
 
     let tx = conn.transaction().await.map_err(db_err)?;
     for p in view.players.iter().filter(|p| !kept.contains(&p.id)) {
+        tx.execute(
+            "DELETE FROM pairs WHERE player_a = ?1 OR player_b = ?1",
+            params![p.id],
+        )
+        .await
+        .map_err(db_err)?;
         tx.execute("DELETE FROM players WHERE id = ?1", params![p.id])
             .await
             .map_err(db_err)?;
     }
-    for (seat, (p, link)) in players.iter().zip(links).enumerate() {
+    for (seat, ((p, link), color)) in players.iter().zip(links).zip(colors).enumerate() {
         let name = p.name.trim().to_string();
+        let color = color as i64;
         match p.id {
             Some(id) if view.player(id).is_some() => {
                 tx.execute(
-                    "UPDATE players SET name = ?1, user_id = ?2, seat = ?3 WHERE id = ?4",
-                    params![name, link, seat as i64, id],
+                    "UPDATE players SET name = ?1, user_id = ?2, seat = ?3, color = ?4 WHERE id = ?5",
+                    params![name, link, seat as i64, color, id],
                 )
                 .await
                 .map_err(db_err)?;
@@ -433,8 +470,8 @@ pub async fn update_players(code: String, players: Vec<PlayerInput>) -> Result<(
             Some(_) => return Err(user_err(StatusCode::BAD_REQUEST, "Jogador desconhecido.")),
             None => {
                 tx.execute(
-                    "INSERT INTO players (room_id, name, user_id, seat) VALUES (?1, ?2, ?3, ?4)",
-                    params![room.id, name, link, seat as i64],
+                    "INSERT INTO players (room_id, name, user_id, seat, color) VALUES (?1, ?2, ?3, ?4, ?5)",
+                    params![room.id, name, link, seat as i64, color],
                 )
                 .await
                 .map_err(db_err)?;
@@ -465,6 +502,50 @@ pub async fn update_players(code: String, players: Vec<PlayerInput>) -> Result<(
         .map_err(db_err)?;
     }
     tx.commit().await.map_err(db_err)?;
+    refresh_current_boi_colors(&conn, room.id, room.mode).await?;
+    notify(room.id);
+    Ok(())
+}
+
+/// Troca as cores de uma dupla. Qualquer pessoa que pode marcar o placar pode
+/// trocar. Vale para o boi atual (se não acabou) e para os próximos.
+#[post("/api/salas/{code}/duplas", headers: HeaderMap)]
+pub async fn set_pair_colors(
+    code: String,
+    players: (i64, i64),
+    primary: u8,
+    secondary: u8,
+) -> Result<(), ServerFnError> {
+    let conn = conn().await?;
+    let (room, view) = editable_room(&conn, &headers, &code).await?;
+    if room.mode != Mode::Duplas {
+        return Err(user_err(StatusCode::BAD_REQUEST, "Esta sala não é de duplas."));
+    }
+    let key = crate::model::pair_key(players.0, players.1);
+    if key.0 == key.1 || view.player(key.0).is_none() || view.player(key.1).is_none() {
+        return Err(user_err(StatusCode::BAD_REQUEST, "Dupla desconhecida."));
+    }
+    if !crate::palette::is_valid(primary) || !crate::palette::is_valid(secondary) {
+        return Err(user_err(StatusCode::BAD_REQUEST, "Cor inválida."));
+    }
+    if primary == secondary {
+        return Err(user_err(
+            StatusCode::BAD_REQUEST,
+            "A cor reserva precisa ser diferente da principal.",
+        ));
+    }
+    // `chosen_at` só muda quando a principal muda: ela decide quem cede a cor.
+    conn.execute(
+        "INSERT INTO pairs (room_id, player_a, player_b, color, color2) VALUES (?1, ?2, ?3, ?4, ?5)
+         ON CONFLICT (room_id, player_a, player_b) DO UPDATE SET
+             chosen_at = CASE WHEN color = excluded.color THEN chosen_at ELSE unixepoch() END,
+             color = excluded.color,
+             color2 = excluded.color2",
+        params![room.id, key.0, key.1, primary as i64, secondary as i64],
+    )
+    .await
+    .map_err(db_err)?;
+    refresh_current_boi_colors(&conn, room.id, room.mode).await?;
     notify(room.id);
     Ok(())
 }
