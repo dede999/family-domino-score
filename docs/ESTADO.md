@@ -42,6 +42,15 @@ bug do `onsubmit` no Safari, mas não era.
 - Itens de `docs/BACKLOG.md`.
 - Deploy: banco no Turso e hospedagem.
 
+## Regras de trabalho
+
+- Commits o mais atômicos possível: uma mudança lógica por commit.
+- `target/` pode ser apagado de vez em quando (`cargo clean`) para liberar
+  espaço. Ele fica no KINGSTON, então isso não ajuda o disco interno. A
+  compilação seguinte é completa e leva alguns minutos.
+- Nada novo começa antes de terminar o que está em andamento (ver
+  `BACKLOG.md`).
+
 ## Como rodar
 
 O disco interno do Mac tem pouco espaço livre, então tudo que é temporário
