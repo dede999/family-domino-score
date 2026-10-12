@@ -98,3 +98,30 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   `data-pronto`, botões, links de ação e campos ficam apagados e sem clique.
 - [ ] Deploy: Turso e hospedagem.
 - [ ] Fase 2: regras configuráveis.
+
+## Futuro: distribuição
+
+Objetivo do André: aprender a lançar um app numa loja. Ordem: primeiro o APK
+no GitHub (Releases do repositório público `dede999/family-domino-score`),
+depois a Play Store.
+
+- [ ] **Deploy do servidor antes de qualquer APK.** O app Android é só a
+  interface: cadastro, salas e placar ao vivo vêm do servidor. Sem servidor
+  publicado (Turso + hospedagem), o APK não funciona fora de casa.
+- [ ] **Ambiente Android no KINGSTON.** SDK e NDK somam vários GB, e o disco
+  interno tem menos de 1 GB livre. Instalar com `ANDROID_HOME` no KINGSTON.
+  Build com `dx bundle --platform android`.
+- [ ] **APK em Releases do GitHub.** A família instala por fora da loja
+  ("fontes desconhecidas"). Assinar sempre com a mesma chave, guardada fora
+  do repositório: sem ela não dá para publicar atualizações.
+- [ ] **Play Store.** Pontos a conferir na época, porque as regras mudam:
+  - A taxa de conta de desenvolvedor do Google é paga uma vez (US$ 25 na
+    última vez que conferi), não por ano. A anuidade de US$ 99 é da Apple.
+  - Contas pessoais novas precisam de um teste fechado com pelo menos 12
+    testadores por 14 dias seguidos antes de publicar em produção. A família
+    pode ser esse grupo.
+  - Verificação de identidade com documento.
+  - A loja pede AAB (não APK), um nível mínimo recente de API do Android e
+    uma página de política de privacidade.
+  - App com cadastro precisa oferecer **exclusão de conta** dentro do app e
+    por um link na web. Hoje o app não tem isso.
