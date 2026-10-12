@@ -8,6 +8,10 @@
   --accent-text: #ffffff;
   --ball: #1f1d1a;
   --win: #b8860b;
+  --win-core: #eedfc5;
+  --lose: #948f86;
+  --lose-core: #e3e0da;
+  --lambreta: #b3261e;
   --error: #b3261e;
   color-scheme: light;
 
@@ -31,6 +35,10 @@
     --accent-text: #0f1a14;
     --ball: #f1ede4;
     --win: #e0b44c;
+    --win-core: #493f29;
+    --lose: #7a766e;
+    --lose-core: #34312d;
+    --lambreta: #ff8a80;
     --error: #ff8a80;
     color-scheme: dark;
   }
@@ -206,9 +214,14 @@ button.swatch:disabled { opacity: 0.2; cursor: default; }
 
 .cross { width: 100%; max-width: 160px; height: auto; }
 .cross line { stroke: var(--muted); stroke-width: 4; stroke-linecap: round; }
+/* Casa vazia: anel fino neutro. Batida: cheia na cor. Fechado: casca grossa na
+   cor e miolo claro. Valores escolhidos em tools/cores.html. */
 .cross .ball { fill: var(--card); stroke: var(--ball); stroke-width: 3; }
-.cross .ball.on { fill: var(--ball); }
-.cross.winner .ball.on { fill: var(--win); stroke: var(--win); }
+.cross .ball.batida { fill: var(--c); stroke: var(--c); stroke-width: 4.5; }
+.cross .ball.fechado { fill: var(--k); stroke: var(--c); stroke-width: 4.5; }
+.cross.winner { --c: var(--win); --k: var(--win-core); }
+.cross.loser { --c: var(--lose); --k: var(--lose-core); }
+.cross.lambreta line { stroke: var(--lambreta); }
 
 .starter { display: flex; flex-direction: column; gap: var(--sp-2); }
 .starter-line { display: flex; align-items: baseline; gap: var(--sp-2); }

@@ -1,6 +1,6 @@
 use super::colors::{PairColorsCard, Swatch};
 use super::new_room::{PlayerDraft, PlayersEditor, seat_label};
-use super::{Cross, current_user, sleep_ms, use_me_resource};
+use super::{Cross, CrossEnd, current_user, sleep_ms, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
 use crate::model::{BoiView, Mode, Outcome, RoomView, format_date};
@@ -185,6 +185,7 @@ fn Scoreboard(view: RoomView, boi: BoiView, on_change: EventHandler<()>) -> Elem
     let players = boi.seating.len();
     let sides = rules::side_count(view.mode, players);
     let hands_len = boi.hands.len();
+    let colors = view.side_colors(&boi);
 
     // Quem saiu na mão que está sendo jogada. Volta para a sugestão sempre que
     // o número de mãos muda (mão registrada, desfeita, ou outra pessoa marcou).
@@ -246,7 +247,21 @@ fn Scoreboard(view: RoomView, boi: BoiView, on_change: EventHandler<()>) -> Elem
             div { class: if sides > 2 { "crosses many" } else { "crosses" },
                 for side in 0..sides {
                     div { key: "{side}", class: "side",
-                        Cross { score: state.scores[side], winner: state.winner == Some(side) }
+                        Cross {
+                            wins: boi
+                                .hands
+                                .iter()
+                                .filter(|h| h.winner_side == Some(side))
+                                .map(|h| h.outcome)
+                                .collect::<Vec<_>>(),
+                            color: colors[side],
+                            end: match (state.winner, state.results[side]) {
+                                (None, _) => CrossEnd::Playing,
+                                (Some(w), _) if w == side => CrossEnd::Winner,
+                                (_, Some(SideResult::Lambreta)) => CrossEnd::Lambreta,
+                                _ => CrossEnd::Loser,
+                            },
+                        }
                         div { class: "side-name", "{view.side_name(&boi, side)}" }
                         div { class: "score", "{state.scores[side]}" }
                     }
