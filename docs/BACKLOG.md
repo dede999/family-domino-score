@@ -20,8 +20,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
    direita.
 3. [x] Botões apagados até o app carregar (ver Infra).
 4. [x] Espaçamento, cores e bolinhas.
-5. Mãos do boi como fileira de quadrados (em andamento).
-6. Histórico com "ver mais".
+5. [x] Mãos do boi como fileira de quadrados.
+6. Histórico com "ver mais" (próximo).
 7. Estatísticas por período.
 
 ## Visual
@@ -75,7 +75,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     3 ou 4 jogadores, pintar todos os perdedores de vermelho apagaria quem é
     quem, e quem levou lambreta não tem bolinha para pintar.
 
-- [ ] **Mãos do boi como fileira de quadrados, no topo e em destaque.**
+- [x] **Mãos do boi como fileira de quadrados, no topo e em destaque.** Feito:
+  `HandStrip` em `src/ui/room.rs`.
   - Trocar a lista de texto (`HandList`, hoje fechada dentro de `<details>`)
     por uma fileira de quadrados com cantos bem arredondados (~30% do lado),
     na ordem em que as mãos aconteceram.
