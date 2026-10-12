@@ -233,15 +233,15 @@ impl RoomView {
             .is_some_and(|b| !b.hands.is_empty() && !self.state(b).finished())
     }
 
-    /// Nome de um lado: o jogador (individual) ou os dois parceiros (duplas).
+    /// Nome de um lado: o jogador (individual) ou os dois parceiros (duplas),
+    /// em ordem alfabética, para a dupla ter sempre o mesmo nome.
     pub fn side_name(&self, boi: &BoiView, side: usize) -> String {
-        let names: Vec<String> = boi
-            .seating
-            .iter()
-            .enumerate()
-            .filter(|(seat, _)| rules::side_of(self.mode, *seat) == side)
-            .map(|(_, &id)| self.player_name(id))
-            .collect();
+        self.pair_name(&sides_of(self.mode, &boi.seating)[side])
+    }
+
+    pub fn pair_name(&self, ids: &[i64]) -> String {
+        let mut names: Vec<String> = ids.iter().map(|&id| self.player_name(id)).collect();
+        names.sort_by_key(|n| sort_key(n));
         names.join(" & ")
     }
 
@@ -252,6 +252,24 @@ impl RoomView {
                 .map(|b| (self.mode, b.seating.as_slice(), b.hands.as_slice())),
         )
     }
+}
+
+/// Chave para ordenar nomes: sem acento e sem diferença de maiúsculas,
+/// para "Álvaro" ficar antes de "Bruno".
+pub fn sort_key(name: &str) -> String {
+    name.to_lowercase()
+        .chars()
+        .map(|c| match c {
+            'á' | 'à' | 'â' | 'ã' | 'ä' => 'a',
+            'é' | 'è' | 'ê' | 'ë' => 'e',
+            'í' | 'ì' | 'î' | 'ï' => 'i',
+            'ó' | 'ò' | 'ô' | 'õ' | 'ö' => 'o',
+            'ú' | 'ù' | 'û' | 'ü' => 'u',
+            'ç' => 'c',
+            'ñ' => 'n',
+            c => c,
+        })
+        .collect()
 }
 
 /// Data no fuso de Brasília (UTC-3, sem horário de verão), como "dd/mm/aaaa".
@@ -310,6 +328,13 @@ mod tests {
             resolve_side_colors(Mode::Individual, &[2, 3, 1], &players, &[]),
             vec![7, 0, 3]
         );
+    }
+
+    #[test]
+    fn nomes_em_ordem_alfabetica_sem_acento() {
+        let mut names = vec!["Bruno", "Álvaro", "carlos", "Ana"];
+        names.sort_by_key(|n| sort_key(n));
+        assert_eq!(names, ["Álvaro", "Ana", "Bruno", "carlos"]);
     }
 
     #[test]
