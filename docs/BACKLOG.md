@@ -25,9 +25,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 6. [x] Histórico com "ver mais".
 7. [x] CI (ver Infra). Passou na frente das estatísticas a pedido do
    André. CD só depois do deploy.
-8. Estatísticas por período: feito, menos os destaques (esperam o critério
-   de "fez melhor").
-9. "Viradas": quantas vezes quem estava atrás virou o boi.
+8. [x] Estatísticas por período.
+9. "Viradas" (próximo).
 10. Recuperar senha (ver Infra).
 
 ## Visual
@@ -108,11 +107,12 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 
 ## Estatísticas por período (pedido em 2026-10-12)
 
-- [ ] **Dados da sala por dia, mês e ano.** Feito em 2026-10-13, menos os
-  destaques: `Period` em `src/model.rs`, `api::room_stats`, `rules::firsts`
+- [x] **Dados da sala por dia, mês e ano.** Feito em 2026-10-13: `Period` em `src/model.rs`, `api::room_stats`, `rules::firsts`
   e `Stats` em `src/ui/room.rs`. Um boi conta no dia em que começou. O
   seletor é Tudo / Dia / Mês / Ano, com os períodos que tiveram jogo.
-  - [ ] **Destaques do período:** quem fez melhor no dia, no mês, no ano.
+  - [x] **Destaques do período:** quem fez melhor no dia, no mês, no ano
+    (`rules::best` e `highlights` em `src/ui/room.rs`). Nas duplas, o
+    melhor jogador só aparece quando não é a própria melhor dupla.
   - [x] **Primeiras do ano:** quem saiu primeiro em 2027, quem ganhou a 1ª mão, o
     1º boi, a 1ª lambreta e a 1ª lambreta reversa do ano (e quem levou).
   - [x] Os números que já existem (bois, mãos, batidas, fechados,
