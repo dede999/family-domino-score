@@ -226,6 +226,10 @@ try:
     click(btn("Ano"))
     find("//select[@aria-label='Período']/option[.='2026']")
     wait_text("11/12")
+    wait_text("Destaque de 2026")
+    wait_text("André & Sobrinho: 11 de 12 bois, 88% das mãos")
+    # A dupla não mudou, então o melhor jogador é ela e não se repete.
+    assert "Jogador: " not in body_text(), "destaque de jogador repetindo a dupla"
     wait_text("Primeiras de 2026")
     assert "Pai saiu" not in body_text()
     wait_text("André & Sobrinho em Pai & Tio (boi 1,")
@@ -233,7 +237,7 @@ try:
     click(btn("Dia"))
     find("//select[@aria-label='Período']/option[contains(., '/2026')]")
     wait_text("11/12")
-    ok("estatísticas por ano (com as primeiras) e por dia")
+    ok("estatísticas por ano (destaque e primeiras) e por dia")
 
     # 8. Visitante: sai da conta e abre a sala pelo código
     s("POST", "/url", {"url": APP})
