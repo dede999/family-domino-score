@@ -238,7 +238,7 @@ fn preview_colors(players: &[PlayerDraft]) -> Vec<u8> {
 
 pub fn seat_label(mode: Mode, seat: usize) -> String {
     match mode {
-        Mode::Duplas => format!("Dupla {} ", if seat % 2 == 0 { "A" } else { "B" }),
+        Mode::Duplas => format!("Dupla {} ", if seat.is_multiple_of(2) { "A" } else { "B" }),
         Mode::Individual => format!("{}º", seat + 1),
     }
 }

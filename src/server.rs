@@ -509,10 +509,10 @@ pub fn subscribe(room_id: i64) -> broadcast::Receiver<()> {
 
 pub fn notify(room_id: i64) {
     let mut channels = CHANNELS.lock().unwrap();
-    if let Some(tx) = channels.get(&room_id) {
-        if tx.send(()).is_err() {
-            // Ninguém assistindo.
-            channels.remove(&room_id);
-        }
+    if let Some(tx) = channels.get(&room_id)
+        && tx.send(()).is_err()
+    {
+        // Ninguém assistindo.
+        channels.remove(&room_id);
     }
 }

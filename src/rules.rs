@@ -66,12 +66,12 @@ pub fn evaluate(mode: Mode, players: usize, hands: &[Hand]) -> BoiState {
     let mut scores = vec![0u32; sides];
     let mut winner = None;
     for hand in hands {
-        if let Some(side) = hand.winner_side {
-            if side < sides {
-                scores[side] += 1;
-                if scores[side] >= POINTS_TO_WIN && winner.is_none() {
-                    winner = Some(side);
-                }
+        if let Some(side) = hand.winner_side
+            && side < sides
+        {
+            scores[side] += 1;
+            if scores[side] >= POINTS_TO_WIN && winner.is_none() {
+                winner = Some(side);
             }
         }
     }

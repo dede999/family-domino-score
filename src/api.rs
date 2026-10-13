@@ -342,13 +342,13 @@ pub async fn room_history(code: String, before: i64) -> Result<HistoryPage, Serv
 pub async fn start_boi(code: String) -> Result<(), ServerFnError> {
     let conn = conn().await?;
     let (room, view) = editable_room(&conn, &headers, &code).await?;
-    if let Some(current) = view.current() {
-        if !view.state(current).finished() {
-            return Err(user_err(
-                StatusCode::CONFLICT,
-                "O boi atual ainda não acabou.",
-            ));
-        }
+    if let Some(current) = view.current()
+        && !view.state(current).finished()
+    {
+        return Err(user_err(
+            StatusCode::CONFLICT,
+            "O boi atual ainda não acabou.",
+        ));
     }
     let seating: Vec<i64> = view.players.iter().map(|p| p.id).collect();
     let colors = settle_colors(&conn, room.id, room.mode, &seating).await?;
@@ -602,14 +602,10 @@ pub async fn room_events(code: String) -> Result<ServerEvents<u8>, ServerFnError
     let mut rx = subscribe(room.id);
     Ok(ServerEvents::new(move |mut tx| async move {
         use tokio::sync::broadcast::error::RecvError;
-        loop {
-            match rx.recv().await {
-                Ok(()) | Err(RecvError::Lagged(_)) => {
-                    if tx.send(1).await.is_err() {
-                        break;
-                    }
-                }
-                Err(RecvError::Closed) => break,
+        // Para quando o canal fecha ou quem assistia desconecta.
+        while let Ok(()) | Err(RecvError::Lagged(_)) = rx.recv().await {
+            if tx.send(1).await.is_err() {
+                break;
             }
         }
     }))
