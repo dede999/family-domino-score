@@ -1,5 +1,7 @@
 use dioxus::prelude::*;
 
+#[cfg(feature = "server")]
+mod accounts;
 mod api;
 mod model;
 mod palette;
