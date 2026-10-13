@@ -23,7 +23,7 @@ Turso (libsql). Objetivo principal: aprender Dioxus. As regras do jogo estão em
 
 ## Em andamento
 
-Nada. Próximo item: ver `BACKLOG.md` → "Ordem atual".
+CI no GitHub Actions (`BACKLOG.md` → Infra).
 
 ## Teste da interface
 

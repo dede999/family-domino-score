@@ -23,9 +23,10 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 5. [x] Mãos do boi como fileira de quadrados. Ajuste de 2026-10-13:
    quadrados de 38px e, nas duplas, retângulo com as iniciais da dupla.
 6. [x] Histórico com "ver mais".
-7. Estatísticas por período (próximo).
-8. CI (ver Infra). CD só depois do deploy.
-9. Chance de vencer o boi (ver "Estatísticas por período").
+7. CI (ver Infra), em andamento desde 2026-10-13. Passou na frente das
+   estatísticas a pedido do André. CD só depois do deploy.
+8. Estatísticas por período, com comparação de dois períodos.
+9. "Viradas": quantas vezes quem estava atrás virou o boi.
 10. Recuperar senha (ver Infra).
 
 ## Visual
@@ -123,38 +124,41 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     ligado, a tabela mostra os dois períodos lado a lado por jogador, com a
     diferença (ex.: bois ganhos 5 → 8, +3). O endpoint recebe uma lista de
     períodos e devolve as estatísticas de cada um, então um período só é o
-    caso de lista com um item. **(em discussão)** comparar só 2 períodos ou
-    vários (ex.: os 12 meses do ano), o que pediria um gráfico em vez de
+    caso de lista com um item. Decidido em 2026-10-13: dois períodos, em
     tabela.
   - Notas técnicas: as datas seguem o fuso de Brasília (`format_date`). O
     cálculo vai para o servidor, num endpoint próprio, porque o histórico vai
     passar a carregar só 10 bois por vez. Mão tem `created_at` e boi tem
     `started_at`, então já dá para filtrar sem mudar o banco.
 
-## Chance de vencer o boi (pedido em 2026-10-13)
+## Viradas (pedido em 2026-10-13)
 
-- [ ] **Durante o boi, mostrar a chance de cada lado levar, dado o placar
-  N a M e o histórico do confronto.**
-  - Não usar a frequência do placar ("das vezes que ficou 2 a 1, quem
-    ganhou?"). Com 5 bois cada placar aparece 1 ou 2 vezes, e o número
-    seria ruído.
-  - Usar as mãos: cada boi tem de 4 a 7 mãos, então 5 bois dão umas 25.
-    Calcula a chance `p` de cada lado ganhar uma mão no confronto e, a
-    partir dela, a chance exata de chegar a 4 primeiro saindo de N a M
-    (contagem de caminhos; empates não mudam o placar). Com 3 ou 4 jogadores
-    no individual é o mesmo cálculo, numa tabela de estados.
-  - Suavizar `p` (somar 2 vitórias imaginárias a cada lado) para não mostrar
-    100% depois de poucas mãos.
-  - Supõe que as mãos são independentes. A lambreta reversa sugere que
-    pode existir embalo; dá para testar isso com os dados depois.
-  - **(em discussão)** Mínimo para aparecer: 5 bois do mesmo confronto
-    (pedido) ou um número de mãos (ex.: 20). Proposta: mãos, porque é o que
-    o cálculo usa.
-  - **(em discussão)** Duplas: confronto é a mesma dupla contra a mesma
-    dupla. Se as duplas mudam muito, isso quase nunca junta 5 bois. Usar o
-    desempenho de cada jogador como reserva?
-  - Cálculo em `src/rules.rs` (puro, com testes); dados do confronto vêm
-    no `RoomView`.
+- [ ] **Durante o boi, mostrar quantas vezes quem estava atrás naquele
+  placar virou.** Inspirado nas estatísticas de esporte americano ("só X%
+  dos times que perderam os 2 primeiros jogos levaram a série"). Precisa
+  ser claro para um senhor de 82 anos que gosta de futebol.
+  - Texto, sem porcentagem e sem gráfico, numa linha abaixo das cruzes:
+    "Atrás por 1 a 3? Nesta sala, quem ficou assim virou 2 de 9 vezes."
+    Palavras do futebol ("virou", "virada"). Contagem em vez de %, porque
+    "2 de 9" já mostra quanta história existe por trás do número, e "22%"
+    esconderia que foram só 9 vezes.
+  - Os dados vêm da sala inteira, não só do confronto. É como no esporte:
+    a estatística é de todos os times, não só daquele jogo. Com só o
+    confronto, 5 bois dariam 1 ou 2 casos por placar.
+  - Aparece quando a sala tiver pelo menos 5 bois terminados, alguém
+    estiver atrás e aquele placar já tiver acontecido antes. Não aparece no
+    0 a 0 nem com placar empatado.
+  - Individual com 3 ou 4: o placar de cada um é comparado com o do líder
+    ("2 a 3" é ter 2 com o líder em 3).
+  - Mãos empatadas não mudam o placar, então não contam como caso novo.
+  - Cálculo em `src/rules.rs` (puro, com testes), no servidor, como as
+    estatísticas: varre os bois da sala e conta, para cada placar
+    (atrás, líder), quantas vezes aconteceu e quantas o lado de trás levou.
+  - Descartado: chance calculada pelas mãos do confronto (um modelo com
+    porcentagem). É mais preciso com poucos dados, mas é difícil de
+    explicar e de confiar para quem não é da área.
+  - Depois, se valer a pena: destacar quando a virada acontecer de fato
+    ("Virada! Só 2 tinham conseguido antes").
 
 ## Infra
 
@@ -185,9 +189,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   único, que vale por 1 hora, e manda pelo WhatsApp. Só guardar o hash do
   token. Por e-mail fica para quando houver deploy e domínio: pede campo de
   e-mail, serviço de envio (ex.: Resend) e verificação do endereço.
-  **(em discussão)** quem pode gerar o link: só o André (comando no
-  servidor ou página de administrador) ou também o dono da sala onde a
-  pessoa joga.
+  Proposta aceita em 2026-10-13. Quem gera: só o André, por enquanto (o
+  jeito exato, comando no servidor ou página de administrador, fica para
+  quando o item começar).
 - [ ] **CD** (depois do deploy). Não dá para automatizar o deploy antes de
   escolher a hospedagem. Quando houver: push na `main` com CI verde publica
   o servidor. Para o APK (ver "Futuro: distribuição"): tag `v*` gera o APK
