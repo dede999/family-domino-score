@@ -28,9 +28,10 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 8. [x] Estatísticas por período.
 9. [x] "Viradas" (os extras ficam para depois, não são obrigatórios).
 10. [x] Regras fora dos handlers (ver Arquitetura).
-11. Recuperar senha (ver Infra), junto com separar as contas do placar
-    (próximo).
-12. Separar `src/model.rs` (ver Arquitetura).
+11. [x] Recuperar senha (ver Infra), junto com separar as contas do placar.
+    Falta só o envio de e-mail de verdade, que depende do deploy.
+12. Separar `src/model.rs` (ver Arquitetura) (próximo).
+13. Histórico em cartões.
 
 ## Visual
 
@@ -108,7 +109,7 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   - A consulta no servidor passa a ter limite e paginação, para não mandar todo
     o histórico a cada atualização via SSE.
 
-## Histórico em cartões (pedido em 2026-10-13, em discussão)
+## Histórico em cartões (pedido em 2026-10-13)
 
 - [ ] **Histórico como sanfona por dia, com cartões e gaveta de detalhe.**
   - Um item da sanfona por dia. Fechado, mostra o resumo do dia ("12/10 ·
@@ -122,6 +123,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     cruzes no estado final, dia, vencedor, quem saiu na primeira mão
     válida e a fileira de mãos (quadrados/retângulos, reaproveitando
     `HandStrip`). Botão de fechar grande, fecha também tocando fora.
+  - Aprovado em 2026-10-13, com a paginação por dia e a gaveta com cruzes
+    e resumo. Na fila depois de separar `src/model.rs`.
   - Proposta técnica: paginar por dia, não por boi. A página de 10 bois
     corta um dia no meio, o que não combina com a sanfona. O histórico
     traz o resumo dos dias, e os bois de um dia só são buscados quando ele
@@ -222,7 +225,16 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     o `dx`. Vale reavaliar se o teste de interface passar a pegar bugs que o
     `cargo test` não pega. `tools/api_test.sh` só imprime, não verifica nada;
     para entrar no CI teria que virar asserções.
-- [ ] **Recuperar senha** (pedido em 2026-10-13). Hoje a conta só tem
+- [x] **Recuperar senha** (pedido em 2026-10-13). Feito em 2026-10-13 com
+  e-mail: "Minha conta" confirma o e-mail por código; "Entrar com código" e
+  "Esqueci a senha" mandam um código de 6 dígitos (15 min, 5 tentativas,
+  um por minuto); o administrador (`PLACAR_ADMIN`) gera link de 1 hora e
+  manda pelo próprio WhatsApp com a mensagem pronta (wa.me, sem
+  automação). Trocar a senha encerra as outras sessões.
+  - [ ] **Envio de e-mail de verdade.** Hoje `send_email` em
+    `src/accounts.rs` só escreve no log (e em `PLACAR_MAILBOX`). Precisa de
+    domínio próprio verificado num serviço (ex.: Resend). Fazer no deploy.
+  - Histórico da decisão: Hoje a conta só tem
   usuário e senha, sem e-mail, então não há para onde mandar um link.
   Proposta para agora: o dono do app gera um link de troca de senha de uso
   único, que vale por 1 hora, e manda pelo WhatsApp. Só guardar o hash do
@@ -269,9 +281,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   - [ ] **Separar `src/model.rs`**: tipos do domínio e funções (`Period`,
     cores das duplas, paginação) num lugar, tipos que só viajam entre
     servidor e tela (`RoomView`, `PeriodReport`, `HistoryPage`) em outro.
-  - [ ] **Contas separadas do placar** no servidor (cadastro, sessão e, em
-    breve, recuperação de senha num módulo próprio). Fazer junto com a
-    recuperação de senha.
+  - [x] **Contas separadas do placar** no servidor: `src/accounts.rs` e
+    `src/api/accounts.rs`.
 
 ## Futuro: distribuição
 

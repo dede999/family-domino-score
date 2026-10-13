@@ -7,6 +7,12 @@ Problema conhecido: a primeira execução depois de reiniciar o `dx` às vezes
 falha logo no começo (cadastro ou sala nova), e a segunda passa. Ainda sem
 causa; suspeita de algo na primeira carga do app.
 
+Outro em aberto (2026-10-13): no teste, depois de sair da conta e ir pelo
+link "Esqueci a senha", digitar o usuário e esperar 61 s, o clique em
+"Mandar código" não chegou ao servidor. Abrindo `/esqueci-a-senha` direto,
+digitando e esperando 61 s, funciona. O teste agora espera antes de abrir
+a tela. Pode ser do Safari automatizado; vale tentar reproduzir na mão.
+
 ## O que é
 
 Placar de dominó para família e amigos. Feito em Dioxus 0.7.10 fullstack com
@@ -15,7 +21,9 @@ Turso (libsql). Objetivo principal: aprender Dioxus. As regras do jogo estão em
 
 ## Pronto
 
-- Backend (`src/server.rs`, `src/api.rs`): cadastro e login (argon2 + cookie),
+- Backend (`src/server.rs`, `src/api/`, `src/accounts.rs`): cadastro e login
+  (argon2 + cookie), e-mail confirmado por código, entrar com código, troca
+  de senha por código ou por link do administrador,
   salas, jogadores avulsos, mãos, desfazer, edição de jogadores entre bois,
   eventos ao vivo via SSE.
 - Regras (`src/rules.rs`): boi até 4, lambreta, lambreta reversa, fechado em
@@ -70,8 +78,14 @@ vai para o KINGSTON:
 ```sh
 TMPDIR=/Volumes/KINGSTON/.cargo-build/tmp CARGO_BUILD_JOBS=4 \
 PLACAR_DB=/Volumes/KINGSTON/.cargo-build/tmp/teste.db \
+PLACAR_MAILBOX=/Volumes/KINGSTON/.cargo-build/tmp/mailbox.txt \
 dx serve --platform web --port 8080 --open false --interactive false --hot-reload false
 ```
+
+`PLACAR_MAILBOX` é onde os e-mails vão parar enquanto não há envio de
+verdade (o teste da interface lê os códigos dali). `PLACAR_ADMIN=<usuário>`
+faz dessa conta a administradora, que gera links de troca de senha em
+"Minha conta".
 
 Com `--interactive false` o `dx` não recompila sozinho. É preciso reiniciá-lo
 depois de mudar o código. A primeira compilação leva uns 2 minutos.
