@@ -1,7 +1,7 @@
 //! Tipos trocados entre o servidor e o navegador.
 
 use crate::palette;
-use crate::rules::{self, BoiState, Firsts, PairRecord, PlayerStats};
+use crate::rules::{self, BoiState, Comeback, Firsts, PairRecord, PlayerStats};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -202,6 +202,9 @@ pub struct RoomView {
     pub stats: Vec<PlayerStats>,
     /// Dias em que a sala jogou, do mais recente para o mais antigo.
     pub played: Vec<Period>,
+    /// Viradas da sala. Vazio enquanto houver menos de
+    /// `rules::MIN_BOIS_FOR_COMEBACKS` bois terminados.
+    pub comebacks: Vec<Comeback>,
     /// Cores das duplas já formadas nesta sala.
     pub pairs: Vec<PairColors>,
 }

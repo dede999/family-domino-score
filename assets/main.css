@@ -269,6 +269,7 @@ button.swatch:disabled { opacity: 0.2; cursor: default; }
 .hand-square.last { outline: 2px solid var(--text); outline-offset: 2px; }
 .hand-square.on { transform: scale(1.15); }
 .hand-detail { text-align: center; }
+.comeback { text-align: center; font-size: 1.05rem; }
 
 .seating { padding-left: 0; list-style: none; }
 .seating li { padding: var(--sp-1) 0; }

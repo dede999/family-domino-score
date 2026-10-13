@@ -272,6 +272,9 @@ fn Scoreboard(view: RoomView, boi: BoiView, on_change: EventHandler<()>) -> Elem
             if !boi.hands.is_empty() {
                 HandStrip { view: view.clone(), boi: boi.clone(), colors: colors.clone() }
             }
+            if !finished {
+                {comeback_lines(&view, &boi, &state.scores)}
+            }
 
             if finished {
                 FinalResult { view: view.clone(), boi: boi.clone() }
@@ -383,6 +386,41 @@ fn FinalResult(view: RoomView, boi: BoiView) -> Element {
             if !reversas.is_empty() {
                 p { class: "lambreta", "Lambreta reversa em {reversas.join(\", \")}!" }
             }
+        }
+    }
+}
+
+/// Para quem está atrás no placar: quantas vezes, nesta sala, quem ficou
+/// assim virou. Contagem e não porcentagem, para mostrar quanta história
+/// existe por trás do número.
+fn comeback_lines(view: &RoomView, boi: &BoiView, scores: &[u32]) -> Element {
+    let lines: Vec<String> = rules::deficits(scores)
+        .into_iter()
+        .enumerate()
+        .filter_map(|(side, d)| {
+            let (behind, leader) = d?;
+            let c = view
+                .comebacks
+                .iter()
+                .find(|c| (c.behind, c.leader) == (behind, leader) && c.times > 0)?;
+            let what = match (c.times, c.turned) {
+                (1, 1) => "Aconteceu 1 vez nesta sala, e virou.".to_string(),
+                (1, _) => "Aconteceu 1 vez nesta sala, e não virou.".to_string(),
+                (n, 0) => format!("Nesta sala, quem ficou assim nunca virou ({n} vezes)."),
+                (n, t) if t == n => {
+                    format!("Nesta sala, quem ficou assim virou todas as {n} vezes.")
+                }
+                (n, t) => format!("Nesta sala, quem ficou assim virou {t} de {n} vezes."),
+            };
+            Some(format!(
+                "{} atrás por {behind} a {leader}? {what}",
+                view.side_name(boi, side)
+            ))
+        })
+        .collect();
+    rsx! {
+        for line in lines {
+            p { key: "{line}", class: "comeback", "{line}" }
         }
     }
 }

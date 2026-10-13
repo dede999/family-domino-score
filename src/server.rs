@@ -455,6 +455,17 @@ pub fn bois_stats<'a>(
     )
 }
 
+fn room_comebacks(mode: Mode, bois: &[BoiView]) -> Vec<crate::rules::Comeback> {
+    let finished = bois
+        .iter()
+        .filter(|b| crate::rules::evaluate(mode, b.seating.len(), &b.hands).finished())
+        .count();
+    if finished < crate::rules::MIN_BOIS_FOR_COMEBACKS {
+        return Vec::new();
+    }
+    crate::rules::comebacks(mode, bois)
+}
+
 /// Dias com pelo menos uma mão, do mais recente para o mais antigo.
 fn played_days(bois: &[BoiView]) -> Vec<Period> {
     let mut days: Vec<Period> = Vec::new();
@@ -489,6 +500,7 @@ pub async fn load_room_view(
         history: history_page(room.mode, &bois, None),
         stats: bois_stats(room.mode, bois.iter()),
         played: played_days(&bois),
+        comebacks: room_comebacks(room.mode, &bois),
         pairs: room_pairs(conn, room.id).await?,
     })
 }

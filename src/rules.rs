@@ -343,6 +343,87 @@ pub fn best<T>(items: &[T], record: impl Fn(&T) -> Record) -> Vec<&T> {
         .collect()
 }
 
+/// Com menos bois terminados que isso, a sala ainda não mostra as viradas.
+pub const MIN_BOIS_FOR_COMEBACKS: usize = 5;
+
+/// Quantas vezes um lado esteve atrás num placar e quantas vezes virou.
+/// `behind` é o placar de quem está atrás; `leader`, o de quem está na frente
+/// (no individual, o maior placar entre os outros).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Comeback {
+    pub behind: u32,
+    pub leader: u32,
+    pub times: u32,
+    pub turned: u32,
+}
+
+/// Placar de cada lado em relação ao líder: `Some((meu, líder))` se o lado
+/// está atrás, `None` se está na frente ou empatado com o líder.
+pub fn deficits(scores: &[u32]) -> Vec<Option<(u32, u32)>> {
+    (0..scores.len())
+        .map(|side| {
+            let leader = (0..scores.len())
+                .filter(|&o| o != side)
+                .map(|o| scores[o])
+                .max()?;
+            (scores[side] < leader).then_some((scores[side], leader))
+        })
+        .collect()
+}
+
+/// Viradas da sala: para cada placar com alguém atrás, quantas vezes um
+/// lado passou por ele num boi terminado e quantas vezes esse lado levou o
+/// boi. Cada lado conta cada placar uma vez por boi.
+pub fn comebacks<'a>(mode: Mode, bois: impl IntoIterator<Item = &'a BoiView>) -> Vec<Comeback> {
+    let mut table: Vec<Comeback> = Vec::new();
+    for boi in bois {
+        let sides = side_count(mode, boi.seating.len());
+        let Some(winner) = evaluate(mode, boi.seating.len(), &boi.hands).winner else {
+            continue;
+        };
+        let mut scores = vec![0u32; sides];
+        let mut seen: Vec<(usize, (u32, u32))> = Vec::new();
+        for hand in &boi.hands {
+            let Some(w) = hand.winner_side.filter(|&w| w < sides) else {
+                continue;
+            };
+            scores[w] += 1;
+            if scores[w] >= POINTS_TO_WIN {
+                break;
+            }
+            for (side, d) in deficits(&scores).into_iter().enumerate() {
+                if let Some(d) = d
+                    && !seen.contains(&(side, d))
+                {
+                    seen.push((side, d));
+                }
+            }
+        }
+        for (side, (behind, leader)) in seen {
+            let i = match table
+                .iter()
+                .position(|c| (c.behind, c.leader) == (behind, leader))
+            {
+                Some(i) => i,
+                None => {
+                    table.push(Comeback {
+                        behind,
+                        leader,
+                        times: 0,
+                        turned: 0,
+                    });
+                    table.len() - 1
+                }
+            };
+            table[i].times += 1;
+            if side == winner {
+                table[i].turned += 1;
+            }
+        }
+    }
+    table
+}
+
 /// Um acontecimento marcante: quem fez, contra quem (quando houver) e em
 /// que boi. Os lados são listas de ids de jogador.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -632,5 +713,42 @@ mod tests {
         assert_eq!((get(1, 2).bois_ganhos, get(1, 2).maos_ganhas), (1, 4));
         assert_eq!((get(3, 4).bois_jogados, get(3, 4).maos_ganhas), (1, 1));
         assert!(pair_records(Mode::Individual, &bois).is_empty());
+    }
+
+    #[test]
+    fn viradas_contam_cada_placar_uma_vez_por_boi() {
+        let boi = |winners: &[Option<usize>]| BoiView {
+            id: 1,
+            number: 1,
+            seating: vec![1, 2, 3, 4],
+            hands: hands(winners, 4),
+            colors: Vec::new(),
+            started_at: 0,
+        };
+        let a = Some(0);
+        let b = Some(1);
+        let bois = [
+            // B abre 3 a 1 e A vira (com um empate no meio, que não conta).
+            boi(&[b, b, a, b, None, a, a, a]),
+            // B abre 1 a 0 e leva.
+            boi(&[b, a, b, b, b]),
+            // Boi sem fim: não conta.
+            boi(&[b, b, b]),
+        ];
+        let table = comebacks(Mode::Duplas, &bois);
+        let get = |behind, leader| {
+            table
+                .iter()
+                .find(|c| (c.behind, c.leader) == (behind, leader))
+                .map(|c| (c.times, c.turned))
+        };
+        // 1 a 3 aconteceu nos dois bois e só o primeiro virou.
+        assert_eq!(get(1, 3), Some((2, 1)));
+        assert_eq!(get(0, 1), Some((2, 1)));
+        assert_eq!(get(0, 2), Some((1, 1)));
+        // O 3 a 4 final não é "estar atrás": o boi já acabou.
+        assert_eq!(get(3, 4), None);
+        // No individual, quem empata com o líder não está atrás.
+        assert_eq!(deficits(&[3, 3, 1]), vec![None, None, Some((1, 3))]);
     }
 }
