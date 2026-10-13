@@ -239,6 +239,14 @@ try:
     wait_text("11/12")
     ok("estatísticas por ano (destaque e primeiras) e por dia")
 
+    # 7d. Viradas: boi 13, Pai & Tio abrem 1 a 0
+    api("boi", {})
+    api("maos", {"expected_hands": 0, "starter_seat": 0, "outcome": "Batida", "winner_side": 1})
+    wait_text("André & Sobrinho atrás por 0 a 1?", timeout=8)
+    s("POST", "/execute/sync", {"script": "window.scrollTo(0, 0)", "args": []})
+    shot("4d-viradas")
+    ok("viradas aparecem para quem está atrás")
+
     # 8. Visitante: sai da conta e abre a sala pelo código
     s("POST", "/url", {"url": APP})
     wait_ready()
