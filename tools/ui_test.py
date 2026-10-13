@@ -222,6 +222,15 @@ try:
     shot("4b-ver-mais")
     ok("histórico mostra 10 e o Ver mais traz o resto")
 
+    # 7c. Estatísticas por período (todos os bois são de hoje)
+    click(btn("Ano"))
+    find("//select[@aria-label='Período']/option[.='2026']")
+    wait_text("11/12")
+    click(btn("Dia"))
+    find("//select[@aria-label='Período']/option[contains(., '/2026')]")
+    wait_text("11/12")
+    ok("estatísticas por ano e por dia")
+
     # 8. Visitante: sai da conta e abre a sala pelo código
     s("POST", "/url", {"url": APP})
     wait_ready()
