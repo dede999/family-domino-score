@@ -245,6 +245,20 @@ impl RoomView {
         names.join(" & ")
     }
 
+    /// Iniciais do lado, na mesma ordem do nome ("Ana & Carlos" → "AC").
+    pub fn side_initials(&self, boi: &BoiView, side: usize) -> String {
+        let mut names: Vec<String> = sides_of(self.mode, &boi.seating)[side]
+            .iter()
+            .map(|&id| self.player_name(id))
+            .collect();
+        names.sort_by_key(|n| sort_key(n));
+        names
+            .iter()
+            .filter_map(|n| n.chars().next())
+            .flat_map(char::to_uppercase)
+            .collect()
+    }
+
     pub fn stats(&self) -> Vec<PlayerStats> {
         rules::compute_stats(
             self.bois

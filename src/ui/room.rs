@@ -388,7 +388,8 @@ fn FinalResult(view: RoomView, boi: BoiView) -> Element {
 }
 
 /// Mãos do boi, na ordem em que aconteceram: quadrado cheio na cor de quem
-/// bateu, casca com miolo claro no fechado, cinza com "=" no empate. A última
+/// bateu, casca com miolo claro no fechado, cinza com "=" no empate. Nas
+/// duplas vira um retângulo com as iniciais da dupla que venceu. A última
 /// fica destacada. Tocar num quadrado mostra o que aconteceu naquela mão.
 #[component]
 fn HandStrip(view: RoomView, boi: BoiView, colors: Vec<u8>) -> Element {
@@ -409,6 +410,9 @@ fn HandStrip(view: RoomView, boi: BoiView, colors: Vec<u8>) -> Element {
                             Outcome::Empate => "empate",
                         };
                         let mut c = format!("hand-square {kind}");
+                        if view.mode == Mode::Duplas {
+                            c.push_str(" pair");
+                        }
                         if i == last {
                             c.push_str(" last");
                         }
@@ -421,7 +425,11 @@ fn HandStrip(view: RoomView, boi: BoiView, colors: Vec<u8>) -> Element {
                     title: hand_text(&view, &boi, i),
                     "aria-pressed": shown == Some(i),
                     onclick: move |_| selected.set(if shown == Some(i) { None } else { Some(i) }),
-                    if hand.outcome == Outcome::Empate { "=" }
+                    match (hand.outcome, hand.winner_side) {
+                        (Outcome::Empate, _) | (_, None) => "=".to_string(),
+                        (_, Some(s)) if view.mode == Mode::Duplas => view.side_initials(&boi, s),
+                        _ => String::new(),
+                    }
                 }
             }
         }
