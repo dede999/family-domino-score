@@ -71,6 +71,20 @@ CREATE TABLE IF NOT EXISTS pairs (
     chosen_at INTEGER NOT NULL DEFAULT (unixepoch()),
     PRIMARY KEY (room_id, player_a, player_b)
 );
+-- Códigos de uso único: confirmar e-mail ('email'), entrar ou trocar a senha
+-- ('login', mandado por e-mail) e link do administrador ('link'). Só o hash.
+-- Em 'email', `email` é o endereço que está sendo confirmado.
+CREATE TABLE IF NOT EXISTS codes (
+    id         INTEGER PRIMARY KEY,
+    user_id    INTEGER NOT NULL REFERENCES users(id),
+    purpose    TEXT NOT NULL,
+    code_hash  TEXT NOT NULL,
+    email      TEXT,
+    attempts   INTEGER NOT NULL DEFAULT 0,
+    expires_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+CREATE INDEX IF NOT EXISTS codes_user ON codes(user_id, purpose);
 CREATE INDEX IF NOT EXISTS players_room ON players(room_id);
 CREATE INDEX IF NOT EXISTS players_user ON players(user_id);
 CREATE INDEX IF NOT EXISTS bois_room ON bois(room_id);
@@ -153,6 +167,13 @@ async fn migrate(conn: &Connection) -> Result<(), libsql::Error> {
         conn.execute(
             "ALTER TABLE bois ADD COLUMN colors TEXT NOT NULL DEFAULT '[]'",
             (),
+        )
+        .await?;
+    }
+    if !has_column(conn, "users", "email").await? {
+        conn.execute_batch(
+            "ALTER TABLE users ADD COLUMN email TEXT;
+             CREATE UNIQUE INDEX IF NOT EXISTS users_email ON users(email);",
         )
         .await?;
     }

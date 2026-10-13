@@ -69,6 +69,16 @@ pub struct UserInfo {
     pub display_name: String,
 }
 
+/// Dados da própria conta, para a tela "Minha conta".
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Account {
+    pub user: UserInfo,
+    /// E-mail confirmado, para receber códigos de entrada.
+    pub email: Option<String>,
+    /// Pode gerar links de troca de senha para os outros.
+    pub is_admin: bool,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RoomSummary {
     pub code: String,
