@@ -202,6 +202,26 @@ try:
     shot("4-estatisticas")
     ok("estatísticas e histórico aparecem")
 
+    # 7b. Histórico paginado: termina o boi 2 e joga mais 10 (12 terminados)
+    def api(path, body):
+        subprocess.run(["curl", "-s", "-b", jar, "-X", "POST", "-H", "Content-Type: application/json",
+                        f"{APP}/api/salas/{code}/{path}", "-d", json.dumps(body)], capture_output=True)
+    for n in range(1, 4):
+        api("maos", {"expected_hands": n, "starter_seat": 0, "outcome": "Batida", "winner_side": 1})
+    for _ in range(10):
+        api("boi", {})
+        for n in range(4):
+            api("maos", {"expected_hands": n, "starter_seat": 0, "outcome": "Batida", "winner_side": 0})
+    wait_text("Boi 12:", timeout=8)
+    hist = "//section[h2='Histórico']//li"
+    assert len(s("POST", "/elements", {"using": "xpath", "value": hist})) == 10, "histórico não mostra 10"
+    click(btn("Ver mais"))
+    wait_text("Boi 1:")
+    assert len(s("POST", "/elements", {"using": "xpath", "value": hist})) == 12
+    assert not s("POST", "/elements", {"using": "xpath", "value": btn("Ver mais")}), "sobrou o Ver mais"
+    shot("4b-ver-mais")
+    ok("histórico mostra 10 e o Ver mais traz o resto")
+
     # 8. Visitante: sai da conta e abre a sala pelo código
     s("POST", "/url", {"url": APP})
     wait_ready()
