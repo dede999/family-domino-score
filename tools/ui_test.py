@@ -35,9 +35,38 @@ def find(xpath, timeout=10):
     raise SystemExit(f"FALHOU: não achei {xpath}\nTela:\n{body_text()[:1500]}")
 
 
+# Conta os cliques que chegam à página. Quando a janela do Safari
+# automatizado perde o foco (alguém usando outra janela do Mac), o WebDriver
+# responde que clicou e a página não recebe nada. Nesse caso o clique é
+# repetido pelo JavaScript, com aviso.
+COUNT_CLICKS = """
+if (window.__clicks === undefined) {
+  window.__clicks = 0;
+  document.addEventListener('click', () => window.__clicks++, true);
+}
+return window.__clicks;
+"""
+
+JS_CLICK = """
+const e = document.evaluate(arguments[0], document, null, 9, null).singleNodeValue;
+if (!e) return false;
+e.click();
+return true;
+"""
+
+
 def click(xpath):
-    s("POST", f"/element/{find(xpath)}/click", {})
+    el = find(xpath)
+    before = s("POST", "/execute/sync", {"script": COUNT_CLICKS, "args": []})
+    s("POST", f"/element/{el}/click", {})
     time.sleep(0.4)
+    after = s("POST", "/execute/sync", {"script": "return window.__clicks", "args": []})
+    # Se a página recarregou, o contador sumiu (None) e o clique valeu.
+    if after == before:
+        focus = s("POST", "/execute/sync", {"script": "return document.hasFocus()", "args": []})
+        print(f"AVISO clique não chegou (foco na janela: {focus}); repetindo por JS: {xpath}", flush=True)
+        s("POST", "/execute/sync", {"script": JS_CLICK, "args": [xpath]})
+        time.sleep(0.4)
 
 
 def type_in(xpath, text):
