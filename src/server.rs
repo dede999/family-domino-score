@@ -90,6 +90,17 @@ pub fn user_err(status: StatusCode, msg: impl Into<String>) -> ServerFnError {
     HttpError::new(status, msg).into()
 }
 
+impl From<crate::room_rules::Refusal> for ServerFnError {
+    fn from(r: crate::room_rules::Refusal) -> Self {
+        use crate::room_rules::Refusal;
+        match r {
+            Refusal::Invalid(msg) => user_err(StatusCode::BAD_REQUEST, msg),
+            Refusal::Conflict(msg) => user_err(StatusCode::CONFLICT, msg),
+            Refusal::Forbidden(msg) => user_err(StatusCode::FORBIDDEN, msg),
+        }
+    }
+}
+
 /// Conexão com o banco. Usa o Turso se `TURSO_DATABASE_URL` estiver definida;
 /// senão, um arquivo SQLite local (`placar.db`, ou o caminho em `PLACAR_DB`).
 pub async fn conn() -> Result<Connection, ServerFnError> {

@@ -5,6 +5,8 @@ mod model;
 mod palette;
 // Parte das regras e dos tipos só é usada no servidor.
 #[cfg_attr(not(feature = "server"), allow(dead_code))]
+mod room_rules;
+#[cfg_attr(not(feature = "server"), allow(dead_code))]
 mod rules;
 #[cfg(feature = "server")]
 mod server;
