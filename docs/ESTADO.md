@@ -1,7 +1,7 @@
 # Estado do desenvolvimento
 
 Arquivo para retomar o trabalho sem depender do histórico da conversa.
-Atualizar ao fim de cada etapa. Atualizado em 2026-10-12.
+Atualizar ao fim de cada etapa. Atualizado em 2026-10-13.
 
 ## O que é
 
@@ -29,7 +29,8 @@ Nada. Próximo item: ver `BACKLOG.md` → "Ordem atual".
 
 `python3 tools/ui_test.py`, com o servidor rodando. Controla o Safari via
 WebDriver, sem dependências, e cobre cadastro, sala, boi completo, desfazer,
-tempo real, estatísticas e visitante. Passou inteiro em 2026-10-12. Precisa
+tempo real, estatísticas, histórico paginado e visitante. Passou inteiro
+em 2026-10-13. Precisa
 de "Permitir Automação Remota" ligado no menu Desenvolvedor do Safari.
 
 O teste espera a marca `data-pronto` no `<html>`, posta por um efeito em

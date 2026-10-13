@@ -20,9 +20,11 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
    direita.
 3. [x] Botões apagados até o app carregar (ver Infra).
 4. [x] Espaçamento, cores e bolinhas.
-5. [x] Mãos do boi como fileira de quadrados.
-6. Histórico com "ver mais" (próximo).
-7. Estatísticas por período.
+5. [x] Mãos do boi como fileira de quadrados. Ajuste de 2026-10-13:
+   quadrados de 38px e, nas duplas, retângulo com as iniciais da dupla.
+6. [x] Histórico com "ver mais".
+7. Estatísticas por período (próximo).
+8. CI (ver Infra). CD só depois do deploy.
 
 ## Visual
 
@@ -90,7 +92,11 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 
 ## Histórico
 
-- [ ] **Mostrar só os últimos N bois no histórico.**
+- [x] **Mostrar só os últimos N bois no histórico.** Feito:
+  `history_page` em `src/model.rs`, `api::room_history` e `History` em
+  `src/ui/room.rs`. As estatísticas da sala agora vêm do servidor
+  (`RoomView.stats`). O servidor ainda lê todos os bois do banco a cada
+  atualização; só a transferência ficou menor.
   - Mostra 10 e um botão "ver mais" carrega mais 10 (decidido; sem N
     configurável).
   - A consulta no servidor passa a ter limite e paginação, para não mandar todo
@@ -124,6 +130,24 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   hidratação se perdem, num celular lento. CSS: enquanto `<html>` não tiver
   `data-pronto`, botões, links de ação e campos ficam apagados e sem clique.
 - [ ] Deploy: Turso e hospedagem.
+- [ ] **CI no GitHub Actions** (pedido em 2026-10-13). A cada push e PR:
+  - `cargo fmt --check`. Hoje falha (30 trechos fora do padrão): primeiro
+    um commit só com `cargo fmt`, depois ligar a verificação.
+  - `cargo clippy` nas duas pontas (`--features server` e
+    `--target wasm32-unknown-unknown`) com `-D warnings`. Hoje dá 7 avisos
+    simples (`if` que pode ser juntado, `is_multiple_of`); corrigir antes.
+  - `cargo test --features server`.
+  - Cache do `target/` (`Swatinem/rust-cache`), senão cada execução leva
+    minutos.
+  - Fica de fora por enquanto: `tools/ui_test.py`. Ele usa o Safari, e no
+    GitHub isso exige runner macOS (mais lento e caro em minutos) e instalar
+    o `dx`. Vale reavaliar se o teste de interface passar a pegar bugs que o
+    `cargo test` não pega. `tools/api_test.sh` só imprime, não verifica nada;
+    para entrar no CI teria que virar asserções.
+- [ ] **CD** (depois do deploy). Não dá para automatizar o deploy antes de
+  escolher a hospedagem. Quando houver: push na `main` com CI verde publica
+  o servidor. Para o APK (ver "Futuro: distribuição"): tag `v*` gera o APK
+  assinado e anexa ao Release, com a chave guardada nos secrets do GitHub.
 - [ ] Fase 2: regras configuráveis.
 
 ## Futuro: distribuição
