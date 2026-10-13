@@ -226,10 +226,14 @@ try:
     click(btn("Ano"))
     find("//select[@aria-label='Período']/option[.='2026']")
     wait_text("11/12")
+    wait_text("Primeiras de 2026")
+    assert "Pai saiu" not in body_text()
+    wait_text("André & Sobrinho em Pai & Tio (boi 1,")
+    shot("4c-primeiras-do-ano")
     click(btn("Dia"))
     find("//select[@aria-label='Período']/option[contains(., '/2026')]")
     wait_text("11/12")
-    ok("estatísticas por ano e por dia")
+    ok("estatísticas por ano (com as primeiras) e por dia")
 
     # 8. Visitante: sai da conta e abre a sala pelo código
     s("POST", "/url", {"url": APP})
