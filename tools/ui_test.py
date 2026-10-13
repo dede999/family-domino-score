@@ -3,6 +3,8 @@ import base64, json, os, random, subprocess, sys, time, urllib.request
 
 WD = "http://127.0.0.1:4444"
 APP = "http://127.0.0.1:8080"
+# Onde o servidor de teste escreve os e-mails (variável PLACAR_MAILBOX do dx).
+MAILBOX = os.environ.get("PLACAR_MAILBOX", "/Volumes/KINGSTON/.cargo-build/tmp/mailbox.txt")
 OUT = os.path.dirname(os.path.abspath(__file__))
 sid = None
 
@@ -78,6 +80,22 @@ def wait_ready(timeout=30):
     raise SystemExit("FALHOU: o app não hidratou")
 
 
+def last_code(to, timeout=10):
+    """Último código de 6 dígitos mandado para `to` (lido da caixa de teste)."""
+    end = time.time() + timeout
+    while time.time() < end:
+        try:
+            lines = [l for l in open(MAILBOX, encoding="utf-8") if l.startswith(f"para {to} |")]
+        except FileNotFoundError:
+            lines = []
+        if lines:
+            digits = [w.strip(".") for w in lines[-1].split() if w.strip(".").isdigit() and len(w.strip(".")) == 6]
+            if digits:
+                return digits[-1]
+        time.sleep(0.3)
+    raise SystemExit(f"FALHOU: nenhum código para {to} em {MAILBOX}")
+
+
 def btn(text):
     return f"//button[normalize-space()='{text}']"
 
@@ -112,6 +130,22 @@ try:
     click("//form[contains(@class,'stack')]//button[@type='submit']")
     wait_text("Olá, André")
     ok(f"cadastro e login ({user})")
+
+    # 1b. Minha conta: confirma um e-mail com o código
+    email = f"{user}@exemplo.com"
+    click("//a[normalize-space()='Minha conta']")
+    wait_text("Adicionar e-mail")
+    type_in("//label[contains(.,'E-mail')]/input", email)
+    click(btn("Mandar código"))
+    wait_text("Mandamos um código")
+    type_in("//label[contains(.,'Código')]/input", last_code(email))
+    click(btn("Confirmar e-mail"))
+    wait_text(email)
+    wait_text("Trocar e-mail")
+    shot("1b-minha-conta")
+    click("//a[normalize-space()='← Início']")
+    wait_text("Minhas salas")
+    ok("e-mail confirmado com código")
 
     # 2. Erro amigável: criar sala sem nome
     click("//a[normalize-space()='Nova sala']")
@@ -258,6 +292,35 @@ try:
     assert "Bateu" not in body_text(), "visitante vê botões de marcar"
     shot("5-visitante")
     ok("visitante vê o placar sem botões")
+
+    # 9. Entrar com código e esqueci a senha
+    s("POST", "/url", {"url": APP})
+    wait_ready()
+    click("//a[normalize-space()='Entrar com código']")
+    type_in("//label[contains(.,'Usuário ou e-mail')]/input", email)
+    click(btn("Mandar código"))
+    wait_text("o código chegou lá")
+    type_in("//label[contains(.,'Código')]/input", last_code(email))
+    click(btn("Entrar"))
+    wait_text("Olá, André")
+    ok("entrou com código")
+    click(btn("Sair"))
+    wait_text("Esqueci a senha")
+    before = last_code(email)
+    # O servidor só manda um código por minuto para a mesma conta.
+    time.sleep(61)
+    click("//a[normalize-space()='Esqueci a senha']")
+    type_in("//label[contains(.,'Usuário ou e-mail')]/input", user)
+    click(btn("Mandar código"))
+    wait_text("o código chegou lá")
+    end = time.time() + 10
+    while (new := last_code(email)) == before and time.time() < end:
+        time.sleep(0.3)
+    type_in("//label[contains(.,'Código')]/input", new)
+    type_in("//label[contains(.,'Senha nova')]/input", "outrasenha")
+    click(btn("Trocar a senha e entrar"))
+    wait_text("Olá, André")
+    ok("trocou a senha esquecida pelo código")
     print("TUDO OK")
 finally:
     if sid:
