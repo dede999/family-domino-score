@@ -124,8 +124,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     ligado, a tabela mostra os dois períodos lado a lado por jogador, com a
     diferença (ex.: bois ganhos 5 → 8, +3). O endpoint recebe uma lista de
     períodos e devolve as estatísticas de cada um, então um período só é o
-    caso de lista com um item. Decidido em 2026-10-13: dois períodos, em
-    tabela.
+    caso de lista com um item. Decidido em 2026-10-13: só dois períodos,
+    em tabela (mais que isso polui a tela). Primeiro escolhe se compara
+    meses ou anos, depois os dois. Dia contra dia fica de fora.
   - Notas técnicas: as datas seguem o fuso de Brasília (`format_date`). O
     cálculo vai para o servidor, num endpoint próprio, porque o histórico vai
     passar a carregar só 10 bois por vez. Mão tem `created_at` e boi tem
@@ -159,6 +160,16 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     explicar e de confiar para quem não é da área.
   - Depois, se valer a pena: destacar quando a virada acontecer de fato
     ("Virada! Só 2 tinham conseguido antes").
+  - **Extras, não obrigatórios** (ideias do André em 2026-10-13):
+    - **Empate em 2 a 2 ou 3 a 3.** Na sala inteira não diz nada (dá
+      metade para cada lado por definição). Faz sentido só no confronto:
+      "No 2 a 2 entre vocês: Pai levou 3, André 2". Em 1 a 1 não mostrar.
+    - **Mão 7 (3 a 3, a decisiva): a saída pesa?** "Na mão decisiva, quem
+      saiu levou 5 de 8 vezes." Leitura minha de "quantas pessoas
+      confirmaram a saída"; confirmar com o André quando o item começar.
+    - **Recuperações até o 3 a 3:** "Já aconteceu 4 vezes de alguém estar
+      0 a 3 ou 1 a 3 e empatar em 3 a 3." Conta quem estava atrás por 2 ou
+      3 e chegou ao empate, mesmo que tenha perdido a mão 7.
 
 ## Infra
 
