@@ -107,7 +107,7 @@ a { color: var(--accent); }
 .stack { display: flex; flex-direction: column; gap: var(--sp-3); }
 label { display: flex; flex-direction: column; gap: var(--sp-1); font-size: 0.9rem; }
 
-input {
+input, select {
   font: inherit;
   padding: 10px var(--sp-3);
   border: 1px solid var(--line);
@@ -271,6 +271,8 @@ button.swatch:disabled { opacity: 0.2; cursor: default; }
 .seating li { padding: var(--sp-1) 0; }
 .seating .seat { display: inline-block; min-width: 4.5em; }
 
+.period-pick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.compare-head { font-weight: 600; }
 .table-wrap { overflow-x: auto; }
 .stats-table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
 .stats-table th, .stats-table td {

@@ -1,8 +1,8 @@
 //! Código só do servidor: banco (Turso/libsql), sessões e avisos em tempo real.
 
 use crate::model::{
-    BoiView, Hand, Mode, Outcome, PairColors, Player, RoomView, UserInfo, history_page, pair_key,
-    resolve_side_colors, sides_of,
+    BoiView, Hand, Mode, Outcome, PairColors, Period, Player, RoomView, UserInfo, history_page,
+    pair_key, resolve_side_colors, sides_of,
 };
 use crate::palette;
 use dioxus::fullstack::{HeaderMap, HttpError, ServerFnError, StatusCode};
@@ -445,6 +445,28 @@ pub async fn refresh_current_boi_colors(
     Ok(())
 }
 
+pub fn bois_stats<'a>(
+    mode: Mode,
+    bois: impl IntoIterator<Item = &'a BoiView>,
+) -> Vec<crate::rules::PlayerStats> {
+    crate::rules::compute_stats(
+        bois.into_iter()
+            .map(|b| (mode, b.seating.as_slice(), b.hands.as_slice())),
+    )
+}
+
+/// Dias com pelo menos uma mão, do mais recente para o mais antigo.
+fn played_days(bois: &[BoiView]) -> Vec<Period> {
+    let mut days: Vec<Period> = Vec::new();
+    for boi in bois.iter().rev().filter(|b| !b.hands.is_empty()) {
+        let day = Period::day_of(boi.started_at);
+        if !days.contains(&day) {
+            days.push(day);
+        }
+    }
+    days
+}
+
 pub async fn load_room_view(
     conn: &Connection,
     room: &RoomRow,
@@ -465,10 +487,8 @@ pub async fn load_room_view(
         players: players.into_iter().map(|p| p.player).collect(),
         current: bois.last().cloned(),
         history: history_page(room.mode, &bois, None),
-        stats: crate::rules::compute_stats(
-            bois.iter()
-                .map(|b| (room.mode, b.seating.as_slice(), b.hands.as_slice())),
-        ),
+        stats: bois_stats(room.mode, bois.iter()),
+        played: played_days(&bois),
         pairs: room_pairs(conn, room.id).await?,
     })
 }

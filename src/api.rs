@@ -1,6 +1,8 @@
 //! Funções de servidor. No navegador, cada uma vira uma chamada HTTP.
 
-use crate::model::{HistoryPage, Mode, Outcome, PlayerInput, RoomSummary, RoomView, UserInfo};
+use crate::model::{
+    HistoryPage, Mode, Outcome, Period, PlayerInput, RoomSummary, RoomView, UserInfo,
+};
 use crate::rules::PlayerStats;
 use dioxus::fullstack::{Json, ServerEvents, SetCookie, SetHeader};
 use dioxus::prelude::*;
@@ -183,10 +185,7 @@ pub async fn my_stats() -> Result<PlayerStats, ServerFnError> {
         };
         let mode = Mode::parse(&row.get::<String>(0).map_err(db_err)?).unwrap_or(Mode::Individual);
         let bois = room_bois(&conn, room_id).await?;
-        let stats = crate::rules::compute_stats(
-            bois.iter()
-                .map(|b| (mode, b.seating.as_slice(), b.hands.as_slice())),
-        );
+        let stats = bois_stats(mode, &bois);
         for s in stats.iter().filter(|s| mine.contains(&s.player_id)) {
             total.add(s);
         }
@@ -335,6 +334,28 @@ pub async fn room_history(code: String, before: i64) -> Result<HistoryPage, Serv
     let room = room_by_code(&conn, &code).await?;
     let bois = room_bois(&conn, room.id).await?;
     Ok(crate::model::history_page(room.mode, &bois, Some(before)))
+}
+
+/// Estatísticas da sala em cada período pedido (no máximo dois, para
+/// comparar). Um boi conta no período do dia em que começou.
+#[post("/api/salas/{code}/estatisticas")]
+pub async fn room_stats(
+    code: String,
+    periods: Vec<Period>,
+) -> Result<Vec<Vec<PlayerStats>>, ServerFnError> {
+    if periods.len() > 2 {
+        return Err(user_err(
+            StatusCode::BAD_REQUEST,
+            "No máximo dois períodos.",
+        ));
+    }
+    let conn = conn().await?;
+    let room = room_by_code(&conn, &code).await?;
+    let bois = room_bois(&conn, room.id).await?;
+    Ok(periods
+        .iter()
+        .map(|p| bois_stats(room.mode, bois.iter().filter(|b| p.contains(b.started_at))))
+        .collect())
 }
 
 /// Começa um boi novo com a ordem atual da roda.

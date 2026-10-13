@@ -3,9 +3,9 @@ use super::new_room::{PlayerDraft, PlayersEditor, seat_label};
 use super::{Cross, CrossEnd, current_user, sleep_ms, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
-use crate::model::{BoiView, Mode, Outcome, RoomView, format_date};
+use crate::model::{BoiView, Mode, Outcome, Period, RoomView, format_date};
 use crate::palette;
-use crate::rules::{self, SideResult};
+use crate::rules::{self, PlayerStats, SideResult};
 use dioxus::prelude::*;
 
 #[component]
@@ -495,50 +495,261 @@ fn EditPlayers(view: RoomView, on_done: EventHandler<bool>) -> Element {
     }
 }
 
+#[derive(Clone, Copy, PartialEq)]
+enum Scope {
+    Tudo,
+    Dia,
+    Mes,
+    Ano,
+}
+
+/// Estatísticas da sala: de tudo, de um dia, de um mês ou de um ano. Meses e
+/// anos podem ser comparados dois a dois.
 #[component]
 fn Stats(view: RoomView) -> Element {
-    let mut stats = view.stats.clone();
-    if stats.is_empty() {
+    let mut scope = use_signal(|| Scope::Tudo);
+    let mut chosen = use_signal(|| None::<Period>);
+    let mut other = use_signal(|| None::<Period>);
+
+    let mut options: Vec<Period> = Vec::new();
+    for day in &view.played {
+        let p = match scope() {
+            Scope::Tudo => continue,
+            Scope::Dia => *day,
+            Scope::Mes => day.month(),
+            Scope::Ano => day.year(),
+        };
+        if !options.contains(&p) {
+            options.push(p);
+        }
+    }
+    // Sem escolha (ou escolha que sumiu), vale o período mais recente.
+    let a = chosen()
+        .filter(|p| options.contains(p))
+        .or(options.first().copied());
+    let b = other()
+        .filter(|p| options.contains(p) && Some(*p) != a)
+        .filter(|_| matches!(scope(), Scope::Mes | Scope::Ano));
+
+    // Recarrega quando o placar muda (mão nova, desfazer, boi novo).
+    let version = (
+        view.current.as_ref().map(|c| (c.id, c.hands.len())),
+        view.stats.iter().map(|s| s.maos_jogadas).sum::<u32>(),
+    );
+    let code = view.code.clone();
+    let fetched = use_resource(use_reactive!(|a, b, version, code| async move {
+        let _ = version;
+        let periods: Vec<Period> = a.into_iter().chain(b).collect();
+        if periods.is_empty() {
+            return Ok(Vec::new());
+        }
+        api::room_stats(code, periods).await
+    }));
+
+    if view.stats.is_empty() {
         return rsx! {};
     }
-    stats.sort_by(|a, b| {
-        b.bois_ganhos
-            .cmp(&a.bois_ganhos)
-            .then(b.maos_ganhas.cmp(&a.maos_ganhas))
-    });
+    let unit = if scope() == Scope::Ano { "ano" } else { "mês" };
+    let index_of = |p: Option<Period>| {
+        p.and_then(|p| options.iter().position(|o| *o == p))
+            .unwrap_or_default()
+    };
+    let body = match scope() {
+        Scope::Tudo => stats_table(&view, view.stats.clone()),
+        _ => match &*fetched.read() {
+            None => rsx! { p { class: "muted", "Carregando…" } },
+            Some(Err(e)) => rsx! { p { class: "error", "{error_message(e)}" } },
+            Some(Ok(list)) => match (a, b, list.as_slice()) {
+                (Some(a), Some(b), [sa, sb]) => compare_table(&view, (a, sa), (b, sb)),
+                (_, _, [sa, ..]) => stats_table(&view, sa.clone()),
+                _ => rsx! {},
+            },
+        },
+    };
+
     rsx! {
         section { class: "card",
             h2 { "Estatísticas da sala" }
-            div { class: "table-wrap",
-                table { class: "stats-table",
-                    thead {
-                        tr {
-                            th { "Jogador" }
-                            th { title: "Bois ganhos / jogados", "Bois" }
-                            th { title: "Mãos ganhas / jogadas", "Mãos" }
-                            th { title: "Batidas", "Bat." }
-                            th { title: "Ganhou no fechado", "Fech." }
-                            th { title: "Lambretas aplicadas / sofridas", "Lamb." }
-                            th { title: "Lambretas reversas aplicadas / sofridas", "Rev." }
+            div { class: "segmented", role: "group", "aria-label": "Período",
+                for (s, label) in [
+                    (Scope::Tudo, "Tudo"),
+                    (Scope::Dia, "Dia"),
+                    (Scope::Mes, "Mês"),
+                    (Scope::Ano, "Ano"),
+                ]
+                {
+                    button {
+                        key: "{label}",
+                        r#type: "button",
+                        class: if scope() == s { "on" },
+                        onclick: move |_| {
+                            scope.set(s);
+                            chosen.set(None);
+                            other.set(None);
+                        },
+                        "{label}"
+                    }
+                }
+            }
+            if scope() != Scope::Tudo {
+                div { class: "period-pick",
+                    select {
+                        "aria-label": "Período",
+                        value: "{index_of(a)}",
+                        onchange: {
+                            let options = options.clone();
+                            move |e: FormEvent| {
+                                chosen.set(e.value().parse::<usize>().ok().and_then(|i| options.get(i).copied()))
+                            }
+                        },
+                        for (i, p) in options.iter().enumerate() {
+                            option { key: "{i}", value: "{i}", "{p.label()}" }
                         }
                     }
-                    tbody {
-                        for s in stats.iter() {
-                            tr { key: "{s.player_id}",
-                                td { "{view.player_name(s.player_id)}" }
-                                td { "{s.bois_ganhos}/{s.bois_jogados}" }
-                                td { "{s.maos_ganhas}/{s.maos_jogadas}" }
-                                td { "{s.batidas}" }
-                                td { "{s.fechados}" }
-                                td { "{s.lambretas_aplicadas}/{s.lambretas_sofridas}" }
-                                td { "{s.reversas_aplicadas}/{s.reversas_sofridas}" }
+                    if b.is_some() {
+                        span { "com" }
+                        select {
+                            "aria-label": "Comparar com",
+                            value: "{index_of(b)}",
+                            onchange: {
+                                let options = options.clone();
+                                move |e: FormEvent| {
+                                    other.set(e.value().parse::<usize>().ok().and_then(|i| options.get(i).copied()))
+                                }
+                            },
+                            for (i, p) in options.iter().enumerate() {
+                                option { key: "{i}", value: "{i}", "{p.label()}" }
                             }
+                        }
+                        button {
+                            r#type: "button",
+                            class: "link",
+                            onclick: move |_| other.set(None),
+                            "Não comparar"
+                        }
+                    } else if matches!(scope(), Scope::Mes | Scope::Ano) && options.len() > 1 {
+                        button {
+                            r#type: "button",
+                            class: "link",
+                            onclick: {
+                                let options = options.clone();
+                                move |_| other.set(options.iter().copied().find(|p| Some(*p) != a))
+                            },
+                            "Comparar com outro {unit}"
                         }
                     }
                 }
             }
+            {body}
             p { class: "muted small",
-                "Lambretas e reversas: aplicadas/sofridas. Nas duplas, a vitória da dupla conta para os dois parceiros."
+                if b.is_some() {
+                    "Lamb.: lambretas aplicadas. "
+                } else {
+                    "Lambretas e reversas: aplicadas/sofridas. "
+                }
+                "Nas duplas, a vitória da dupla conta para os dois parceiros."
+            }
+        }
+    }
+}
+
+/// Mais bois ganhos primeiro; empate desempata por mãos ganhas.
+fn by_wins(a: &PlayerStats, b: &PlayerStats) -> std::cmp::Ordering {
+    b.bois_ganhos
+        .cmp(&a.bois_ganhos)
+        .then(b.maos_ganhas.cmp(&a.maos_ganhas))
+}
+
+fn stats_table(view: &RoomView, mut stats: Vec<PlayerStats>) -> Element {
+    if stats.is_empty() {
+        return rsx! { p { class: "muted", "Ninguém jogou neste período." } };
+    }
+    stats.sort_by(by_wins);
+    rsx! {
+        div { class: "table-wrap",
+            table { class: "stats-table",
+                thead {
+                    tr {
+                        th { "Jogador" }
+                        th { title: "Bois ganhos / jogados", "Bois" }
+                        th { title: "Mãos ganhas / jogadas", "Mãos" }
+                        th { title: "Batidas", "Bat." }
+                        th { title: "Ganhou no fechado", "Fech." }
+                        th { title: "Lambretas aplicadas / sofridas", "Lamb." }
+                        th { title: "Lambretas reversas aplicadas / sofridas", "Rev." }
+                    }
+                }
+                tbody {
+                    for s in stats.iter() {
+                        tr { key: "{s.player_id}",
+                            td { "{view.player_name(s.player_id)}" }
+                            td { "{s.bois_ganhos}/{s.bois_jogados}" }
+                            td { "{s.maos_ganhas}/{s.maos_jogadas}" }
+                            td { "{s.batidas}" }
+                            td { "{s.fechados}" }
+                            td { "{s.lambretas_aplicadas}/{s.lambretas_sofridas}" }
+                            td { "{s.reversas_aplicadas}/{s.reversas_sofridas}" }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Dois períodos lado a lado, do mais antigo para o mais recente: cada
+/// célula mostra "antes → depois". Só três colunas, para caber no celular
+/// sem rolar para o lado.
+fn compare_table(
+    view: &RoomView,
+    a: (Period, &[PlayerStats]),
+    b: (Period, &[PlayerStats]),
+) -> Element {
+    let ((pa, sa), (pb, sb)) = if a.0.range().0 <= b.0.range().0 {
+        (a, b)
+    } else {
+        (b, a)
+    };
+    let mut rows: Vec<(PlayerStats, PlayerStats)> = Vec::new();
+    for id in sb.iter().chain(sa).map(|s| s.player_id) {
+        if rows.iter().any(|(_, n)| n.player_id == id) {
+            continue;
+        }
+        let find = |list: &[PlayerStats]| {
+            list.iter()
+                .find(|s| s.player_id == id)
+                .cloned()
+                .unwrap_or(PlayerStats {
+                    player_id: id,
+                    ..Default::default()
+                })
+        };
+        rows.push((find(sa), find(sb)));
+    }
+    rows.sort_by(|x, y| by_wins(&x.1, &y.1));
+    let cell = |old: u32, new: u32| format!("{old} → {new}");
+    rsx! {
+        p { class: "compare-head", "{pa.label()} → {pb.label()}" }
+        div { class: "table-wrap",
+            table { class: "stats-table",
+                thead {
+                    tr {
+                        th { "Jogador" }
+                        th { title: "Bois ganhos", "Bois" }
+                        th { title: "Mãos ganhas", "Mãos" }
+                        th { title: "Lambretas aplicadas", "Lamb." }
+                    }
+                }
+                tbody {
+                    for (old, new) in rows.iter() {
+                        tr { key: "{new.player_id}",
+                            td { "{view.player_name(new.player_id)}" }
+                            td { {cell(old.bois_ganhos, new.bois_ganhos)} }
+                            td { {cell(old.maos_ganhas, new.maos_ganhas)} }
+                            td { {cell(old.lambretas_aplicadas, new.lambretas_aplicadas)} }
+                        }
+                    }
+                }
             }
         }
     }
