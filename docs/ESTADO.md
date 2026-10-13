@@ -3,15 +3,15 @@
 Arquivo para retomar o trabalho sem depender do histórico da conversa.
 Atualizar ao fim de cada etapa. Atualizado em 2026-10-13.
 
-Problema conhecido: a primeira execução depois de reiniciar o `dx` às vezes
-falha logo no começo (cadastro ou sala nova), e a segunda passa. Ainda sem
-causa; suspeita de algo na primeira carga do app.
-
-Outro em aberto (2026-10-13): no teste, depois de sair da conta e ir pelo
-link "Esqueci a senha", digitar o usuário e esperar 61 s, o clique em
-"Mandar código" não chegou ao servidor. Abrindo `/esqueci-a-senha` direto,
-digitando e esperando 61 s, funciona. O teste agora espera antes de abrir
-a tela. Pode ser do Safari automatizado; vale tentar reproduzir na mão.
+Cliques perdidos (resolvido em 2026-10-13): quando a janela do Safari
+automatizado perde o foco (alguém usando outra janela do Mac durante o
+teste), o WebDriver responde que clicou e a página não recebe nada. Era a
+causa das falhas "intermitentes". Confirmado: nessas horas
+`document.hasFocus()` é falso, e o app continua respondendo a cliques por
+JavaScript; o mesmo acontece com o build de produção, então não é do `dx`.
+`click()` no teste confere se o clique chegou e, se não, repete pelo
+JavaScript com um AVISO. Muitos avisos = janela sem foco; para um teste
+"de verdade", deixar o Safari na frente e não mexer no Mac.
 
 ## O que é
 

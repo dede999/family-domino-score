@@ -30,8 +30,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 10. [x] Regras fora dos handlers (ver Arquitetura).
 11. [x] Recuperar senha (ver Infra), junto com separar as contas do placar.
     Falta só o envio de e-mail de verdade, que depende do deploy.
-12. Separar `src/model.rs` (ver Arquitetura) (próximo).
-13. Histórico em cartões.
+12. [x] Separar `src/model.rs` (ver Arquitetura).
+13. Histórico em cartões (próximo).
 
 ## Visual
 
@@ -278,7 +278,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     este jogador?", "o boi atual acabou?" e "o que o desfazer apaga?" estão
     misturados com SQL e não têm teste. Viram funções puras em
     `rules.rs`, com teste, e o handler só carrega, chama e grava.
-  - [ ] **Separar `src/model.rs`**: tipos do domínio e funções (`Period`,
+  - [x] **Separar `src/model.rs`** (feito em 2026-10-13: `model.rs` com o
+    domínio, `period.rs` com datas e períodos, `views.rs` com o que viaja
+    entre servidor e tela): tipos do domínio e funções (`Period`,
     cores das duplas, paginação) num lugar, tipos que só viajam entre
     servidor e tela (`RoomView`, `PeriodReport`, `HistoryPage`) em outro.
   - [x] **Contas separadas do placar** no servidor: `src/accounts.rs` e
