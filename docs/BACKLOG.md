@@ -117,11 +117,10 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     1º boi, a 1ª lambreta e a 1ª lambreta reversa do ano (e quem levou).
   - [x] Os números que já existem (bois, mãos, batidas, fechados,
     lambretas), filtrados pelo período.
-  - **(em discussão)** "Fez melhor" precisa de critério. Proposta: mais bois
-    ganhos; empate desempata por % de mãos ganhas. Com poucos jogos num dia,
-    isso varia muito, então mostrar junto quantos bois cada um jogou.
-  - **(em discussão)** Nas duplas, também mostrar a melhor dupla, além do
-    melhor jogador.
+  - "Fez melhor" (decidido em 2026-10-13): mais bois ganhos; empate
+    desempata por % de mãos ganhas. Mostrar junto quantos bois cada um
+    jogou, porque com poucos jogos num dia isso varia muito.
+  - Nas duplas, também mostrar a melhor dupla (decidido em 2026-10-13).
   - [x] **Comparar dois períodos** (pedido em 2026-10-13; ex.: março de 2026 ×
     março de 2027). O seletor ganha um "comparar com" opcional. Com ele
     ligado, a tabela mostra os dois períodos lado a lado por jogador, com a
@@ -214,6 +213,27 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   o servidor. Para o APK (ver "Futuro: distribuição"): tag `v*` gera o APK
   assinado e anexa ao Release, com a chave guardada nos secrets do GitHub.
 - [ ] Fase 2: regras configuráveis.
+
+## Arquitetura
+
+- **Refatorar para DDD? Avaliado em 2026-10-13: não, como doutrina.** O
+  código tem 4 mil linhas, um desenvolvedor e um domínio pequeno. Os
+  padrões táticos (agregados, repositórios, serviços de domínio, eventos)
+  trariam mais arquivos e camadas do que clareza. O que o DDD tem de mais
+  útil o projeto já tem: a linguagem do domínio no código (boi, mão,
+  lambreta, saída, fechado) e um núcleo de regras puro e testado
+  (`src/rules.rs`, sem banco e sem tela). Três ajustes pontuais valem a
+  pena, cada um quando um item da fila mexer naquela parte:
+  - [ ] **Tirar regras dos handlers de `src/api.rs`.** Hoje "pode remover
+    este jogador?", "o boi atual acabou?" e "o que o desfazer apaga?" estão
+    misturados com SQL e não têm teste. Viram funções puras em
+    `rules.rs`, com teste, e o handler só carrega, chama e grava.
+  - [ ] **Separar `src/model.rs`**: tipos do domínio e funções (`Period`,
+    cores das duplas, paginação) num lugar, tipos que só viajam entre
+    servidor e tela (`RoomView`, `PeriodReport`, `HistoryPage`) em outro.
+  - [ ] **Contas separadas do placar** no servidor (cadastro, sessão e, em
+    breve, recuperação de senha num módulo próprio). Fazer junto com a
+    recuperação de senha.
 
 ## Futuro: distribuição
 
