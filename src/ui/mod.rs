@@ -1,8 +1,10 @@
+mod account;
 mod colors;
 mod home;
 mod new_room;
 mod room;
 
+pub use account::{EnterWithCode, ForgotPassword, LinkReset, MyAccount};
 pub use home::Home;
 pub use new_room::NewRoom;
 pub use room::Room;

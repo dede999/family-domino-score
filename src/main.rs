@@ -14,7 +14,7 @@ mod rules;
 mod server;
 mod ui;
 
-use ui::{Home, NewRoom, Room};
+use ui::{EnterWithCode, ForgotPassword, Home, LinkReset, MyAccount, NewRoom, Room};
 
 #[derive(Routable, Clone, PartialEq)]
 enum Route {
@@ -24,6 +24,14 @@ enum Route {
     NewRoom {},
     #[route("/sala/:code")]
     Room { code: String },
+    #[route("/conta")]
+    MyAccount {},
+    #[route("/entrar-com-codigo")]
+    EnterWithCode {},
+    #[route("/esqueci-a-senha")]
+    ForgotPassword {},
+    #[route("/nova-senha/:username/:token")]
+    LinkReset { username: String, token: String },
 }
 
 const CSS: Asset = asset!("/assets/main.css");

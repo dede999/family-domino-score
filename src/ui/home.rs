@@ -16,6 +16,7 @@ pub fn Home() -> Element {
                 if let Some(user) = &user {
                     div { class: "who",
                         span { "Olá, {user.display_name}" }
+                        Link { to: Route::MyAccount {}, "Minha conta" }
                         LogoutButton {}
                     }
                 }
@@ -135,6 +136,13 @@ fn AuthForm() -> Element {
                     error.set(None);
                 },
                 if creating() { "Já tenho conta" } else { "Criar uma conta" }
+            }
+            if !creating() {
+                p { class: "small",
+                    Link { to: Route::ForgotPassword {}, "Esqueci a senha" }
+                    " · "
+                    Link { to: Route::EnterWithCode {}, "Entrar com código" }
+                }
             }
         }
     }

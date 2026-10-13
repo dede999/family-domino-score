@@ -277,6 +277,7 @@ button.swatch:disabled { opacity: 0.2; cursor: default; }
 
 .period-pick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
 .compare-head { font-weight: 600; }
+.link-out { overflow-wrap: anywhere; font-size: 0.9rem; }
 .highlight {
   padding: var(--sp-3);
   border-radius: 8px;
