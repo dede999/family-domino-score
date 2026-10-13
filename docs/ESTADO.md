@@ -23,7 +23,7 @@ Turso (libsql). Objetivo principal: aprender Dioxus. As regras do jogo estão em
 
 ## Em andamento
 
-CI no GitHub Actions (`BACKLOG.md` → Infra).
+Nada. Próximo item: ver `BACKLOG.md` → "Ordem atual".
 
 ## Teste da interface
 
@@ -37,6 +37,12 @@ O teste espera a marca `data-pronto` no `<html>`, posta por um efeito em
 `App` (`src/main.rs`) depois da hidratação. Sem isso ele clicava antes de o
 WebAssembly assumir a página, e o clique se perdia. Foi isso que pareceu um
 bug do `onsubmit` no Safari, mas não era.
+
+## CI
+
+`.github/workflows/ci.yml`: fmt, clippy (servidor e navegador, avisos viram
+erro) e testes. Antes de commitar, rodar o mesmo localmente:
+`cargo fmt && cargo clippy --features server --all-targets -- -D warnings`.
 
 ## Falta
 

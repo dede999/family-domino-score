@@ -23,9 +23,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 5. [x] Mãos do boi como fileira de quadrados. Ajuste de 2026-10-13:
    quadrados de 38px e, nas duplas, retângulo com as iniciais da dupla.
 6. [x] Histórico com "ver mais".
-7. CI (ver Infra), em andamento desde 2026-10-13. Passou na frente das
-   estatísticas a pedido do André. CD só depois do deploy.
-8. Estatísticas por período, com comparação de dois períodos.
+7. [x] CI (ver Infra). Passou na frente das estatísticas a pedido do
+   André. CD só depois do deploy.
+8. Estatísticas por período, com comparação de dois períodos (próximo).
 9. "Viradas": quantas vezes quem estava atrás virou o boi.
 10. Recuperar senha (ver Infra).
 
@@ -169,12 +169,11 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   hidratação se perdem, num celular lento. CSS: enquanto `<html>` não tiver
   `data-pronto`, botões, links de ação e campos ficam apagados e sem clique.
 - [ ] Deploy: Turso e hospedagem.
-- [ ] **CI no GitHub Actions** (pedido em 2026-10-13). A cada push e PR:
-  - `cargo fmt --check`. Hoje falha (30 trechos fora do padrão): primeiro
-    um commit só com `cargo fmt`, depois ligar a verificação.
+- [x] **CI no GitHub Actions** (pedido em 2026-10-13). Feito:
+  `.github/workflows/ci.yml`. A cada push na `main` e em PR:
+  - `cargo fmt --check`.
   - `cargo clippy` nas duas pontas (`--features server` e
-    `--target wasm32-unknown-unknown`) com `-D warnings`. Hoje dá 7 avisos
-    simples (`if` que pode ser juntado, `is_multiple_of`); corrigir antes.
+    `--target wasm32-unknown-unknown`) com `-D warnings`.
   - `cargo test --features server`.
   - Cache do `target/` (`Swatinem/rust-cache`), senão cada execução leva
     minutos.
