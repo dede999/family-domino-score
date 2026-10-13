@@ -26,8 +26,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 7. [x] CI (ver Infra). Passou na frente das estatísticas a pedido do
    André. CD só depois do deploy.
 8. [x] Estatísticas por período.
-9. "Viradas", em andamento desde 2026-10-13.
-10. Regras fora dos handlers (ver Arquitetura).
+9. [x] "Viradas" (os extras ficam para depois, não são obrigatórios).
+10. Regras fora dos handlers (ver Arquitetura) (próximo).
 11. Recuperar senha (ver Infra), junto com separar as contas do placar.
 12. Separar `src/model.rs` (ver Arquitetura).
 
@@ -142,8 +142,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 
 ## Viradas (pedido em 2026-10-13)
 
-- [ ] **Durante o boi, mostrar quantas vezes quem estava atrás naquele
-  placar virou.** Inspirado nas estatísticas de esporte americano ("só X%
+- [x] **Durante o boi, mostrar quantas vezes quem estava atrás naquele
+  placar virou.** Feito em 2026-10-13: `rules::comebacks`,
+  `RoomView.comebacks` e `comeback_lines` em `src/ui/room.rs`. Inspirado nas estatísticas de esporte americano ("só X%
   dos times que perderam os 2 primeiros jogos levaram a série"). Precisa
   ser claro para um senhor de 82 anos que gosta de futebol.
   - Texto, sem porcentagem e sem gráfico, numa linha abaixo das cruzes:
