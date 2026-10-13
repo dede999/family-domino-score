@@ -108,6 +108,25 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   - A consulta no servidor passa a ter limite e paginação, para não mandar todo
     o histórico a cada atualização via SSE.
 
+## Histórico em cartões (pedido em 2026-10-13, em discussão)
+
+- [ ] **Histórico como sanfona por dia, com cartões e gaveta de detalhe.**
+  - Um item da sanfona por dia. Fechado, mostra o resumo do dia ("12/10 ·
+    8 bois · André & Sobrinho 5 × 3 Pai & Tio"). Abertos: hoje e/ou o
+    último dia jogado.
+  - Dentro do dia, um cartão por boi com o resultado final (número, lados,
+    placar, lambreta). Os cartões ficam em grade com
+    `repeat(auto-fill, minmax(…, 1fr))`: o número de colunas se ajusta à
+    largura da tela sem rolar para o lado.
+  - Tocar no cartão abre uma gaveta de baixo para cima com o boi: as duas
+    cruzes no estado final, dia, vencedor, quem saiu na primeira mão
+    válida e a fileira de mãos (quadrados/retângulos, reaproveitando
+    `HandStrip`). Botão de fechar grande, fecha também tocando fora.
+  - Proposta técnica: paginar por dia, não por boi. A página de 10 bois
+    corta um dia no meio, o que não combina com a sanfona. O histórico
+    traz o resumo dos dias, e os bois de um dia só são buscados quando ele
+    abre. "Ver mais" passa a trazer mais dias.
+
 ## Estatísticas por período (pedido em 2026-10-12)
 
 - [x] **Dados da sala por dia, mês e ano.** Feito em 2026-10-13: `Period` em `src/model.rs`, `api::room_stats`, `rules::firsts`
@@ -212,6 +231,19 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   Proposta aceita em 2026-10-13. Quem gera: só o André, por enquanto (o
   jeito exato, comando no servidor ou página de administrador, fica para
   quando o item começar).
+  - **(em discussão, 2026-10-13)** O André apontou o furo: se quem esquece
+    a senha é ele, a página de administrador não serve (não dá para
+    entrar). Proposta nova: e-mail opcional na conta; "Esqueci a senha"
+    manda um código de 6 dígitos (vale 15 min, 5 tentativas), e o mesmo
+    mecanismo permite "Entrar com código" como opção ao lado da senha.
+    Envio por um serviço de e-mail (ex.: Resend, plano grátis), que exige
+    domínio próprio verificado, ou seja, depende do deploy. Dá para fazer
+    tudo antes com um "carteiro" de desenvolvimento que só escreve o código
+    no log do servidor, e ligar o envio real depois. O link gerado pelo
+    administrador fica como reserva para quem não tem e-mail.
+    WhatsApp e SMS descartados por agora: a API oficial do WhatsApp pede
+    verificação da empresa na Meta e modelos aprovados; SMS é pago por
+    mensagem e pede cadastro de remetente.
 - [ ] **CD** (depois do deploy). Não dá para automatizar o deploy antes de
   escolher a hospedagem. Quando houver: push na `main` com CI verde publica
   o servidor. Para o APK (ver "Futuro: distribuição"): tag `v*` gera o APK
