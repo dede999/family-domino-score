@@ -25,7 +25,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 6. [x] Histórico com "ver mais".
 7. [x] CI (ver Infra). Passou na frente das estatísticas a pedido do
    André. CD só depois do deploy.
-8. Estatísticas por período, com comparação de dois períodos (próximo).
+8. Estatísticas por período: feito, menos os destaques (esperam o critério
+   de "fez melhor").
 9. "Viradas": quantas vezes quem estava atrás virou o boi.
 10. Recuperar senha (ver Infra).
 
@@ -107,26 +108,32 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 
 ## Estatísticas por período (pedido em 2026-10-12)
 
-- [ ] **Dados da sala por dia, mês e ano.** Seletor de período (hoje, um
-  dia, um mês, um ano) com:
-  - **Destaques do período:** quem fez melhor no dia, no mês, no ano.
-  - **Primeiras do ano:** quem saiu primeiro em 2027, quem ganhou a 1ª mão, o
+- [ ] **Dados da sala por dia, mês e ano.** Feito em 2026-10-13, menos os
+  destaques: `Period` em `src/model.rs`, `api::room_stats`, `rules::firsts`
+  e `Stats` em `src/ui/room.rs`. Um boi conta no dia em que começou. O
+  seletor é Tudo / Dia / Mês / Ano, com os períodos que tiveram jogo.
+  - [ ] **Destaques do período:** quem fez melhor no dia, no mês, no ano.
+  - [x] **Primeiras do ano:** quem saiu primeiro em 2027, quem ganhou a 1ª mão, o
     1º boi, a 1ª lambreta e a 1ª lambreta reversa do ano (e quem levou).
-  - Os números que já existem (bois, mãos, batidas, fechados, lambretas),
-    filtrados pelo período.
+  - [x] Os números que já existem (bois, mãos, batidas, fechados,
+    lambretas), filtrados pelo período.
   - **(em discussão)** "Fez melhor" precisa de critério. Proposta: mais bois
     ganhos; empate desempata por % de mãos ganhas. Com poucos jogos num dia,
     isso varia muito, então mostrar junto quantos bois cada um jogou.
   - **(em discussão)** Nas duplas, também mostrar a melhor dupla, além do
     melhor jogador.
-  - **Comparar dois períodos** (pedido em 2026-10-13; ex.: março de 2026 ×
+  - [x] **Comparar dois períodos** (pedido em 2026-10-13; ex.: março de 2026 ×
     março de 2027). O seletor ganha um "comparar com" opcional. Com ele
     ligado, a tabela mostra os dois períodos lado a lado por jogador, com a
     diferença (ex.: bois ganhos 5 → 8, +3). O endpoint recebe uma lista de
     períodos e devolve as estatísticas de cada um, então um período só é o
     caso de lista com um item. Decidido em 2026-10-13: só dois períodos,
     em tabela (mais que isso polui a tela). Primeiro escolhe se compara
-    meses ou anos, depois os dois. Dia contra dia fica de fora.
+    meses ou anos, depois os dois. Dia contra dia fica de fora. Na tela
+    a comparação mostra só bois, mãos e lambretas ("3 → 8"): com mais
+    colunas a tabela não cabia no celular.
+  - A tabela simples (7 colunas) já precisava rolar para o lado no celular
+    antes desta mudança. Vale rever junto com os destaques.
   - Notas técnicas: as datas seguem o fuso de Brasília (`format_date`). O
     cálculo vai para o servidor, num endpoint próprio, porque o histórico vai
     passar a carregar só 10 bois por vez. Mão tem `created_at` e boi tem

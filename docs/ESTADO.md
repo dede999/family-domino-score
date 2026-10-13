@@ -3,6 +3,10 @@
 Arquivo para retomar o trabalho sem depender do histórico da conversa.
 Atualizar ao fim de cada etapa. Atualizado em 2026-10-13.
 
+Problema conhecido: a primeira execução depois de reiniciar o `dx` às vezes
+falha logo no começo (cadastro ou sala nova), e a segunda passa. Ainda sem
+causa; suspeita de algo na primeira carga do app.
+
 ## O que é
 
 Placar de dominó para família e amigos. Feito em Dioxus 0.7.10 fullstack com
