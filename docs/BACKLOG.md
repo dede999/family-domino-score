@@ -25,6 +25,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 6. [x] Histórico com "ver mais".
 7. Estatísticas por período (próximo).
 8. CI (ver Infra). CD só depois do deploy.
+9. Chance de vencer o boi (ver "Estatísticas por período").
+10. Recuperar senha (ver Infra).
 
 ## Visual
 
@@ -116,10 +118,43 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     isso varia muito, então mostrar junto quantos bois cada um jogou.
   - **(em discussão)** Nas duplas, também mostrar a melhor dupla, além do
     melhor jogador.
+  - **Comparar dois períodos** (pedido em 2026-10-13; ex.: março de 2026 ×
+    março de 2027). O seletor ganha um "comparar com" opcional. Com ele
+    ligado, a tabela mostra os dois períodos lado a lado por jogador, com a
+    diferença (ex.: bois ganhos 5 → 8, +3). O endpoint recebe uma lista de
+    períodos e devolve as estatísticas de cada um, então um período só é o
+    caso de lista com um item. **(em discussão)** comparar só 2 períodos ou
+    vários (ex.: os 12 meses do ano), o que pediria um gráfico em vez de
+    tabela.
   - Notas técnicas: as datas seguem o fuso de Brasília (`format_date`). O
     cálculo vai para o servidor, num endpoint próprio, porque o histórico vai
     passar a carregar só 10 bois por vez. Mão tem `created_at` e boi tem
     `started_at`, então já dá para filtrar sem mudar o banco.
+
+## Chance de vencer o boi (pedido em 2026-10-13)
+
+- [ ] **Durante o boi, mostrar a chance de cada lado levar, dado o placar
+  N a M e o histórico do confronto.**
+  - Não usar a frequência do placar ("das vezes que ficou 2 a 1, quem
+    ganhou?"). Com 5 bois cada placar aparece 1 ou 2 vezes, e o número
+    seria ruído.
+  - Usar as mãos: cada boi tem de 4 a 7 mãos, então 5 bois dão umas 25.
+    Calcula a chance `p` de cada lado ganhar uma mão no confronto e, a
+    partir dela, a chance exata de chegar a 4 primeiro saindo de N a M
+    (contagem de caminhos; empates não mudam o placar). Com 3 ou 4 jogadores
+    no individual é o mesmo cálculo, numa tabela de estados.
+  - Suavizar `p` (somar 2 vitórias imaginárias a cada lado) para não mostrar
+    100% depois de poucas mãos.
+  - Supõe que as mãos são independentes. A lambreta reversa sugere que
+    pode existir embalo; dá para testar isso com os dados depois.
+  - **(em discussão)** Mínimo para aparecer: 5 bois do mesmo confronto
+    (pedido) ou um número de mãos (ex.: 20). Proposta: mãos, porque é o que
+    o cálculo usa.
+  - **(em discussão)** Duplas: confronto é a mesma dupla contra a mesma
+    dupla. Se as duplas mudam muito, isso quase nunca junta 5 bois. Usar o
+    desempenho de cada jogador como reserva?
+  - Cálculo em `src/rules.rs` (puro, com testes); dados do confronto vêm
+    no `RoomView`.
 
 ## Infra
 
@@ -144,6 +179,15 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     o `dx`. Vale reavaliar se o teste de interface passar a pegar bugs que o
     `cargo test` não pega. `tools/api_test.sh` só imprime, não verifica nada;
     para entrar no CI teria que virar asserções.
+- [ ] **Recuperar senha** (pedido em 2026-10-13). Hoje a conta só tem
+  usuário e senha, sem e-mail, então não há para onde mandar um link.
+  Proposta para agora: o dono do app gera um link de troca de senha de uso
+  único, que vale por 1 hora, e manda pelo WhatsApp. Só guardar o hash do
+  token. Por e-mail fica para quando houver deploy e domínio: pede campo de
+  e-mail, serviço de envio (ex.: Resend) e verificação do endereço.
+  **(em discussão)** quem pode gerar o link: só o André (comando no
+  servidor ou página de administrador) ou também o dono da sala onde a
+  pessoa joga.
 - [ ] **CD** (depois do deploy). Não dá para automatizar o deploy antes de
   escolher a hospedagem. Quando houver: push na `main` com CI verde publica
   o servidor. Para o APK (ver "Futuro: distribuição"): tag `v*` gera o APK
