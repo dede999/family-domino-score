@@ -2,7 +2,8 @@
 //! marcar e desfazer mão. Sem I/O: o handler carrega os dados, pergunta aqui
 //! e grava o que foi decidido. As regras do jogo ficam em `rules.rs`.
 
-use crate::model::{BoiView, Mode, Outcome, Player, PlayerInput, pair_key};
+use crate::model::{BoiView, Mode, Outcome, Player, pair_key};
+use crate::views::PlayerInput;
 use crate::{palette, rules};
 
 /// Por que um pedido foi recusado. O handler transforma em resposta HTTP.

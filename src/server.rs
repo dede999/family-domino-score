@@ -3,10 +3,11 @@
 
 use crate::accounts::require_user;
 use crate::model::{
-    BoiView, Hand, Mode, Outcome, PairColors, Period, Player, RoomView, UserInfo, history_page,
-    pair_key, resolve_side_colors, sides_of,
+    BoiView, Hand, Mode, Outcome, PairColors, Player, pair_key, resolve_side_colors, sides_of,
 };
 use crate::palette;
+use crate::period::Period;
+use crate::views::{RoomView, UserInfo, history_page};
 use dioxus::fullstack::{HeaderMap, HttpError, ServerFnError, StatusCode};
 use libsql::{Connection, Database, params};
 use std::collections::HashMap;

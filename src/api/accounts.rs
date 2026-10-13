@@ -1,6 +1,6 @@
 //! Cadastro, login e sessão.
 
-use crate::model::{Account, UserInfo};
+use crate::views::{Account, UserInfo};
 use dioxus::fullstack::{Json, SetCookie, SetHeader};
 use dioxus::prelude::*;
 

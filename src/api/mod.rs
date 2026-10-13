@@ -3,10 +3,10 @@
 mod accounts;
 pub use accounts::*;
 
-use crate::model::{
-    HistoryPage, Mode, Outcome, Period, PeriodReport, PlayerInput, RoomSummary, RoomView,
-};
+use crate::model::{Mode, Outcome};
+use crate::period::Period;
 use crate::rules::PlayerStats;
+use crate::views::{HistoryPage, PeriodReport, PlayerInput, RoomSummary, RoomView};
 use dioxus::fullstack::ServerEvents;
 use dioxus::prelude::*;
 
@@ -192,7 +192,7 @@ pub async fn room_history(code: String, before: i64) -> Result<HistoryPage, Serv
     let conn = conn().await?;
     let room = room_by_code(&conn, &code).await?;
     let bois = room_bois(&conn, room.id).await?;
-    Ok(crate::model::history_page(room.mode, &bois, Some(before)))
+    Ok(crate::views::history_page(room.mode, &bois, Some(before)))
 }
 
 /// Estatísticas da sala em cada período pedido (no máximo dois, para

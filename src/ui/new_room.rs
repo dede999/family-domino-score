@@ -2,8 +2,9 @@ use super::colors::{ColorPicker, Swatch};
 use super::{current_user, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
-use crate::model::{Mode, PlayerInput};
+use crate::model::Mode;
 use crate::palette;
+use crate::views::PlayerInput;
 use dioxus::prelude::*;
 
 /// Linha editável de jogador: nome e, opcionalmente, a conta vinculada.

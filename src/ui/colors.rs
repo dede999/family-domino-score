@@ -1,6 +1,7 @@
 use crate::api::{self, error_message};
-use crate::model::{RoomView, pair_key, resolve_side_colors, sides_of};
+use crate::model::{pair_key, resolve_side_colors, sides_of};
 use crate::palette::{self, PALETTE};
+use crate::views::RoomView;
 use dioxus::prelude::*;
 
 /// Bolinha de cor. Com `onclick`, vira botão.

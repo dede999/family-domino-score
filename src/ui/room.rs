@@ -3,9 +3,11 @@ use super::new_room::{PlayerDraft, PlayersEditor, seat_label};
 use super::{Cross, CrossEnd, current_user, sleep_ms, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
-use crate::model::{BoiView, Mode, Outcome, Period, PeriodReport, RoomView, format_date};
+use crate::model::{BoiView, Mode, Outcome};
 use crate::palette;
+use crate::period::{Period, format_date};
 use crate::rules::{self, Firsts, Moment, PlayerStats, Record, SideResult};
+use crate::views::{PeriodReport, RoomView};
 use dioxus::prelude::*;
 
 #[component]

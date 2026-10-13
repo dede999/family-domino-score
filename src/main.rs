@@ -5,6 +5,7 @@ mod accounts;
 mod api;
 mod model;
 mod palette;
+mod period;
 // Parte das regras e dos tipos só é usada no servidor.
 #[cfg_attr(not(feature = "server"), allow(dead_code))]
 mod room_rules;
@@ -13,6 +14,7 @@ mod rules;
 #[cfg(feature = "server")]
 mod server;
 mod ui;
+mod views;
 
 use ui::{EnterWithCode, ForgotPassword, Home, LinkReset, MyAccount, NewRoom, Room};
 

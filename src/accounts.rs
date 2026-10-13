@@ -1,7 +1,7 @@
 //! Contas: senhas, sessões e quem está logado. Só no servidor.
 
-use crate::model::UserInfo;
 use crate::server::{db_err, random_token, user_err};
+use crate::views::UserInfo;
 use dioxus::fullstack::{HeaderMap, ServerFnError, StatusCode};
 use libsql::{Connection, params};
 

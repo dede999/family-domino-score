@@ -9,8 +9,9 @@ pub use home::Home;
 pub use new_room::NewRoom;
 pub use room::Room;
 
-use crate::model::{Outcome, UserInfo};
+use crate::model::Outcome;
 use crate::palette;
+use crate::views::UserInfo;
 use dioxus::prelude::*;
 
 pub type MeResource = Resource<Result<Option<UserInfo>, ServerFnError>>;
