@@ -27,8 +27,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
    André. CD só depois do deploy.
 8. [x] Estatísticas por período.
 9. [x] "Viradas" (os extras ficam para depois, não são obrigatórios).
-10. Regras fora dos handlers (ver Arquitetura) (próximo).
-11. Recuperar senha (ver Infra), junto com separar as contas do placar.
+10. [x] Regras fora dos handlers (ver Arquitetura).
+11. Recuperar senha (ver Infra), junto com separar as contas do placar
+    (próximo).
 12. Separar `src/model.rs` (ver Arquitetura).
 
 ## Visual
@@ -227,7 +228,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   lambreta, saída, fechado) e um núcleo de regras puro e testado
   (`src/rules.rs`, sem banco e sem tela). Três ajustes pontuais valem a
   pena, e entraram na "Ordem atual" (itens 10 a 12) a pedido do André:
-  - [ ] **Tirar regras dos handlers de `src/api.rs`.** Hoje "pode remover
+  - [x] **Tirar regras dos handlers de `src/api.rs`.** Feito em
+    2026-10-13: `src/room_rules.rs` (regras da sala, separadas das regras
+    do jogo em `rules.rs`), com o tipo `Refusal` virando a resposta HTTP. Hoje "pode remover
     este jogador?", "o boi atual acabou?" e "o que o desfazer apaga?" estão
     misturados com SQL e não têm teste. Viram funções puras em
     `rules.rs`, com teste, e o handler só carrega, chama e grava.
