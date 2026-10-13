@@ -562,7 +562,11 @@ fn History(view: RoomView) -> Element {
     let older_list = older.read();
     let finished: Vec<&BoiView> = first
         .iter()
-        .chain(older_list.iter().filter(|b| oldest_first.is_none_or(|id| b.id < id)))
+        .chain(
+            older_list
+                .iter()
+                .filter(|b| oldest_first.is_none_or(|id| b.id < id)),
+        )
         .collect();
     let more = older_more().unwrap_or(view.history.more);
     if finished.is_empty() {

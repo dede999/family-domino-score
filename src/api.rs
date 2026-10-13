@@ -178,7 +178,9 @@ pub async fn my_stats() -> Result<PlayerStats, ServerFnError> {
             .query("SELECT mode FROM rooms WHERE id = ?1", params![room_id])
             .await
             .map_err(db_err)?;
-        let Some(row) = rows.next().await.map_err(db_err)? else { continue };
+        let Some(row) = rows.next().await.map_err(db_err)? else {
+            continue;
+        };
         let mode = Mode::parse(&row.get::<String>(0).map_err(db_err)?).unwrap_or(Mode::Individual);
         let bois = room_bois(&conn, room_id).await?;
         let stats = crate::rules::compute_stats(
@@ -202,7 +204,10 @@ fn validate_players(mode: Mode, players: &[PlayerInput]) -> Result<(), ServerFnE
         return Err(user_err(StatusCode::BAD_REQUEST, msg));
     }
     if players.iter().any(|p| p.name.trim().is_empty()) {
-        return Err(user_err(StatusCode::BAD_REQUEST, "Todo jogador precisa de um nome."));
+        return Err(user_err(
+            StatusCode::BAD_REQUEST,
+            "Todo jogador precisa de um nome.",
+        ));
     }
     Ok(())
 }
@@ -219,7 +224,10 @@ fn assign_colors(players: &[PlayerInput]) -> Result<Vec<u8>, ServerFnError> {
     }
     let chosen: Vec<u8> = colors.iter().flatten().copied().collect();
     if (1..chosen.len()).any(|i| chosen[..i].contains(&chosen[i])) {
-        return Err(user_err(StatusCode::BAD_REQUEST, "Dois jogadores estão com a mesma cor."));
+        return Err(user_err(
+            StatusCode::BAD_REQUEST,
+            "Dois jogadores estão com a mesma cor.",
+        ));
     }
     for i in 0..colors.len() {
         if colors[i].is_none() {
@@ -238,11 +246,22 @@ async fn resolve_links(
 ) -> Result<Vec<Option<i64>>, ServerFnError> {
     let mut links = Vec::new();
     for p in players {
-        let username = p.username.as_deref().map(str::trim).filter(|u| !u.is_empty());
+        let username = p
+            .username
+            .as_deref()
+            .map(str::trim)
+            .filter(|u| !u.is_empty());
         let link = match username {
-            Some(u) => Some(user_id_by_username(conn, &u.to_lowercase()).await?.ok_or_else(
-                || user_err(StatusCode::BAD_REQUEST, format!("Usuário \"{u}\" não existe.")),
-            )?),
+            Some(u) => Some(
+                user_id_by_username(conn, &u.to_lowercase())
+                    .await?
+                    .ok_or_else(|| {
+                        user_err(
+                            StatusCode::BAD_REQUEST,
+                            format!("Usuário \"{u}\" não existe."),
+                        )
+                    })?,
+            ),
             None => None,
         };
         if link.is_some() && links.contains(&link) {
@@ -286,7 +305,13 @@ pub async fn create_room(
     for (seat, ((p, link), color)) in players.iter().zip(links).zip(colors).enumerate() {
         tx.execute(
             "INSERT INTO players (room_id, name, user_id, seat, color) VALUES (?1, ?2, ?3, ?4, ?5)",
-            params![room_id, p.name.trim().to_string(), link, seat as i64, color as i64],
+            params![
+                room_id,
+                p.name.trim().to_string(),
+                link,
+                seat as i64,
+                color as i64
+            ],
         )
         .await
         .map_err(db_err)?;
@@ -319,7 +344,10 @@ pub async fn start_boi(code: String) -> Result<(), ServerFnError> {
     let (room, view) = editable_room(&conn, &headers, &code).await?;
     if let Some(current) = view.current() {
         if !view.state(current).finished() {
-            return Err(user_err(StatusCode::CONFLICT, "O boi atual ainda não acabou."));
+            return Err(user_err(
+                StatusCode::CONFLICT,
+                "O boi atual ainda não acabou.",
+            ));
         }
     }
     let seating: Vec<i64> = view.players.iter().map(|p| p.id).collect();
@@ -429,7 +457,10 @@ pub async fn update_players(code: String, players: Vec<PlayerInput>) -> Result<(
     let conn = conn().await?;
     let (room, view) = editable_room(&conn, &headers, &code).await?;
     if !view.is_owner {
-        return Err(user_err(StatusCode::FORBIDDEN, "Só o dono da sala pode editar os jogadores."));
+        return Err(user_err(
+            StatusCode::FORBIDDEN,
+            "Só o dono da sala pode editar os jogadores.",
+        ));
     }
     if view.boi_in_progress() {
         return Err(user_err(
@@ -529,7 +560,10 @@ pub async fn set_pair_colors(
     let conn = conn().await?;
     let (room, view) = editable_room(&conn, &headers, &code).await?;
     if room.mode != Mode::Duplas {
-        return Err(user_err(StatusCode::BAD_REQUEST, "Esta sala não é de duplas."));
+        return Err(user_err(
+            StatusCode::BAD_REQUEST,
+            "Esta sala não é de duplas.",
+        ));
     }
     let key = crate::model::pair_key(players.0, players.1);
     if key.0 == key.1 || view.player(key.0).is_none() || view.player(key.1).is_none() {

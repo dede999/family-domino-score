@@ -1,8 +1,8 @@
 //! Código só do servidor: banco (Turso/libsql), sessões e avisos em tempo real.
 
 use crate::model::{
-    BoiView, Hand, Mode, Outcome, PairColors, Player, RoomView, UserInfo, history_page,
-    pair_key, resolve_side_colors, sides_of,
+    BoiView, Hand, Mode, Outcome, PairColors, Player, RoomView, UserInfo, history_page, pair_key,
+    resolve_side_colors, sides_of,
 };
 use crate::palette;
 use dioxus::fullstack::{HeaderMap, HttpError, ServerFnError, StatusCode};
@@ -79,7 +79,11 @@ CREATE INDEX IF NOT EXISTS bois_room ON bois(room_id);
 /// Erro de banco: registra no log e devolve uma mensagem genérica.
 pub fn db_err(e: impl std::fmt::Display) -> ServerFnError {
     eprintln!("erro de banco: {e}");
-    HttpError::new(StatusCode::INTERNAL_SERVER_ERROR, "Erro no servidor. Tente de novo.").into()
+    HttpError::new(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "Erro no servidor. Tente de novo.",
+    )
+    .into()
 }
 
 pub fn user_err(status: StatusCode, msg: impl Into<String>) -> ServerFnError {
@@ -113,7 +117,11 @@ pub async fn conn() -> Result<Connection, ServerFnError> {
 
 /// Colunas acrescentadas depois da primeira versão do banco.
 async fn migrate(conn: &Connection) -> Result<(), libsql::Error> {
-    async fn has_column(conn: &Connection, table: &str, column: &str) -> Result<bool, libsql::Error> {
+    async fn has_column(
+        conn: &Connection,
+        table: &str,
+        column: &str,
+    ) -> Result<bool, libsql::Error> {
         let mut rows = conn
             .query(
                 "SELECT 1 FROM pragma_table_info(?1) WHERE name = ?2",
@@ -131,8 +139,11 @@ async fn migrate(conn: &Connection) -> Result<(), libsql::Error> {
         .await?;
     }
     if !has_column(conn, "bois", "colors").await? {
-        conn.execute("ALTER TABLE bois ADD COLUMN colors TEXT NOT NULL DEFAULT '[]'", ())
-            .await?;
+        conn.execute(
+            "ALTER TABLE bois ADD COLUMN colors TEXT NOT NULL DEFAULT '[]'",
+            (),
+        )
+        .await?;
     }
     Ok(())
 }
@@ -217,7 +228,10 @@ pub async fn current_user(
     }))
 }
 
-pub async fn require_user(conn: &Connection, headers: &HeaderMap) -> Result<UserInfo, ServerFnError> {
+pub async fn require_user(
+    conn: &Connection,
+    headers: &HeaderMap,
+) -> Result<UserInfo, ServerFnError> {
     current_user(conn, headers)
         .await?
         .ok_or_else(|| user_err(StatusCode::UNAUTHORIZED, "Entre na sua conta primeiro."))
@@ -228,7 +242,10 @@ pub async fn user_id_by_username(
     username: &str,
 ) -> Result<Option<i64>, ServerFnError> {
     let mut rows = conn
-        .query("SELECT id FROM users WHERE username = ?1", params![username])
+        .query(
+            "SELECT id FROM users WHERE username = ?1",
+            params![username],
+        )
         .await
         .map_err(db_err)?;
     match rows.next().await.map_err(db_err)? {
@@ -276,7 +293,10 @@ pub struct PlayerRow {
     pub user_id: Option<i64>,
 }
 
-pub async fn room_players(conn: &Connection, room_id: i64) -> Result<Vec<PlayerRow>, ServerFnError> {
+pub async fn room_players(
+    conn: &Connection,
+    room_id: i64,
+) -> Result<Vec<PlayerRow>, ServerFnError> {
     let mut rows = conn
         .query(
             "SELECT p.id, p.name, u.username, p.user_id, p.color FROM players p
@@ -433,8 +453,8 @@ pub async fn load_room_view(
     let players = room_players(conn, room.id).await?;
     let bois = room_bois(conn, room.id).await?;
     let is_owner = user.is_some_and(|u| u.id == room.owner_id);
-    let can_edit = is_owner
-        || user.is_some_and(|u| players.iter().any(|p| p.user_id == Some(u.id)));
+    let can_edit =
+        is_owner || user.is_some_and(|u| players.iter().any(|p| p.user_id == Some(u.id)));
     Ok(RoomView {
         code: room.code.clone(),
         name: room.name.clone(),

@@ -277,7 +277,15 @@ mod tests {
     #[test]
     fn lambreta_reversa() {
         // Perdendo de 0-3, vira para 4-3.
-        let w = [Some(1), Some(1), Some(1), Some(0), Some(0), Some(0), Some(0)];
+        let w = [
+            Some(1),
+            Some(1),
+            Some(1),
+            Some(0),
+            Some(0),
+            Some(0),
+            Some(0),
+        ];
         let s = evaluate(Mode::Individual, 2, &hands(&w, 2));
         assert_eq!(s.scores, vec![4, 3]);
         assert_eq!(s.results[1], Some(SideResult::LambretaReversa));

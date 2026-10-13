@@ -39,7 +39,11 @@ pub fn Swatch(
 
 /// Fileira com todas as cores da paleta. As de `taken` ficam desativadas.
 #[component]
-pub fn ColorPicker(value: u8, #[props(default)] taken: Vec<u8>, onchange: EventHandler<u8>) -> Element {
+pub fn ColorPicker(
+    value: u8,
+    #[props(default)] taken: Vec<u8>,
+    onchange: EventHandler<u8>,
+) -> Element {
     rsx! {
         div { class: "color-picker",
             for c in 0..PALETTE.len() as u8 {
@@ -66,18 +70,20 @@ pub fn PairColorsCard(view: RoomView, on_change: EventHandler<()>) -> Element {
     let sides = sides_of(view.mode, &seating);
     let effective = resolve_side_colors(view.mode, &seating, &view.players, &view.pairs);
 
-    let save = use_callback(move |(code, ids, primary, secondary): (String, (i64, i64), u8, u8)| {
-        busy.set(true);
-        error.set(None);
-        spawn(async move {
-            let result = api::set_pair_colors(code, ids, primary, secondary).await;
-            busy.set(false);
-            if let Err(e) = result {
-                error.set(Some(error_message(&e)));
-            }
-            on_change.call(());
-        });
-    });
+    let save = use_callback(
+        move |(code, ids, primary, secondary): (String, (i64, i64), u8, u8)| {
+            busy.set(true);
+            error.set(None);
+            spawn(async move {
+                let result = api::set_pair_colors(code, ids, primary, secondary).await;
+                busy.set(false);
+                if let Err(e) = result {
+                    error.set(Some(error_message(&e)));
+                }
+                on_change.call(());
+            });
+        },
+    );
 
     rsx! {
         section { class: "card",

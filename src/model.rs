@@ -332,7 +332,12 @@ mod tests {
     use super::*;
 
     fn pair(a: i64, b: i64, primary: u8, secondary: u8, chosen_at: i64) -> PairColors {
-        PairColors { players: pair_key(a, b), primary, secondary, chosen_at }
+        PairColors {
+            players: pair_key(a, b),
+            primary,
+            secondary,
+            chosen_at,
+        }
     }
 
     // Roda das duplas: assentos 0 e 2 são o lado A, 1 e 3 o lado B.
@@ -341,27 +346,47 @@ mod tests {
     #[test]
     fn duplas_com_cores_diferentes() {
         let pairs = [pair(1, 3, 5, 0, 10), pair(2, 4, 2, 0, 20)];
-        assert_eq!(resolve_side_colors(Mode::Duplas, &RODA, &[], &pairs), vec![5, 2]);
+        assert_eq!(
+            resolve_side_colors(Mode::Duplas, &RODA, &[], &pairs),
+            vec![5, 2]
+        );
     }
 
     #[test]
     fn mesma_primaria_quem_escolheu_por_ultimo_usa_a_reserva() {
         let pairs = [pair(3, 1, 5, 6, 10), pair(2, 4, 5, 7, 20)];
-        assert_eq!(resolve_side_colors(Mode::Duplas, &RODA, &[], &pairs), vec![5, 7]);
+        assert_eq!(
+            resolve_side_colors(Mode::Duplas, &RODA, &[], &pairs),
+            vec![5, 7]
+        );
         let pairs = [pair(1, 3, 5, 6, 30), pair(2, 4, 5, 7, 20)];
-        assert_eq!(resolve_side_colors(Mode::Duplas, &RODA, &[], &pairs), vec![6, 5]);
+        assert_eq!(
+            resolve_side_colors(Mode::Duplas, &RODA, &[], &pairs),
+            vec![6, 5]
+        );
     }
 
     #[test]
     fn dupla_nova_recebe_cor_livre() {
         let pairs = [pair(2, 4, 0, 1, 10)];
-        assert_eq!(resolve_side_colors(Mode::Duplas, &RODA, &[], &pairs), vec![1, 0]);
-        assert_eq!(resolve_side_colors(Mode::Duplas, &RODA, &[], &[]), vec![0, 1]);
+        assert_eq!(
+            resolve_side_colors(Mode::Duplas, &RODA, &[], &pairs),
+            vec![1, 0]
+        );
+        assert_eq!(
+            resolve_side_colors(Mode::Duplas, &RODA, &[], &[]),
+            vec![0, 1]
+        );
     }
 
     #[test]
     fn individual_usa_a_cor_de_cada_jogador() {
-        let p = |id, color| Player { id, name: String::new(), username: None, color };
+        let p = |id, color| Player {
+            id,
+            name: String::new(),
+            username: None,
+            color,
+        };
         let players = [p(1, 3), p(2, 7), p(3, 0)];
         assert_eq!(
             resolve_side_colors(Mode::Individual, &[2, 3, 1], &players, &[]),
@@ -385,7 +410,11 @@ mod tests {
 
     /// Boi de duplas: terminado (4 batidas do lado 0) ou com uma mão só.
     fn boi(id: i64, finished: bool) -> BoiView {
-        let win = Hand { starter_seat: 0, outcome: Outcome::Batida, winner_side: Some(0) };
+        let win = Hand {
+            starter_seat: 0,
+            outcome: Outcome::Batida,
+            winner_side: Some(0),
+        };
         BoiView {
             id,
             number: id as u32,
