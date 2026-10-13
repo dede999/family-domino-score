@@ -1,7 +1,7 @@
 //! Funções de servidor. No navegador, cada uma vira uma chamada HTTP.
 
 use crate::model::{
-    HistoryPage, Mode, Outcome, Period, PlayerInput, RoomSummary, RoomView, UserInfo,
+    HistoryPage, Mode, Outcome, Period, PeriodReport, PlayerInput, RoomSummary, RoomView, UserInfo,
 };
 use crate::rules::PlayerStats;
 use dioxus::fullstack::{Json, ServerEvents, SetCookie, SetHeader};
@@ -337,12 +337,13 @@ pub async fn room_history(code: String, before: i64) -> Result<HistoryPage, Serv
 }
 
 /// Estatísticas da sala em cada período pedido (no máximo dois, para
-/// comparar). Um boi conta no período do dia em que começou.
+/// comparar), e as primeiras vezes quando o período é um ano. Um boi conta
+/// no período do dia em que começou.
 #[post("/api/salas/{code}/estatisticas")]
 pub async fn room_stats(
     code: String,
     periods: Vec<Period>,
-) -> Result<Vec<Vec<PlayerStats>>, ServerFnError> {
+) -> Result<Vec<PeriodReport>, ServerFnError> {
     if periods.len() > 2 {
         return Err(user_err(
             StatusCode::BAD_REQUEST,
@@ -354,7 +355,14 @@ pub async fn room_stats(
     let bois = room_bois(&conn, room.id).await?;
     Ok(periods
         .iter()
-        .map(|p| bois_stats(room.mode, bois.iter().filter(|b| p.contains(b.started_at))))
+        .map(|&p| {
+            let inside = || bois.iter().filter(move |b| p.contains(b.started_at));
+            PeriodReport {
+                stats: bois_stats(room.mode, inside()),
+                firsts: matches!(p, Period::Year { .. })
+                    .then(|| crate::rules::firsts(room.mode, inside())),
+            }
+        })
         .collect())
 }
 

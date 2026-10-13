@@ -176,6 +176,9 @@ button.primary { width: 100%; font-size: 1.05rem; padding: 14px; }
 
 .stats { display: grid; grid-template-columns: auto 1fr; gap: var(--sp-1) var(--sp-4); }
 .stats dt { color: var(--muted); }
+/* Primeiras do ano: título em cima, texto embaixo, para caber no celular. */
+.firsts dt { color: var(--muted); font-size: 0.9rem; }
+.firsts dd + dt { margin-top: var(--sp-2); }
 
 /* Cores da paleta: o elemento recebe --cl/--kl/--cd/--kd no style (ver src/palette.rs)
    e o CSS escolhe a versão do tema: --c é a cor cheia, --k o miolo do fechado. */

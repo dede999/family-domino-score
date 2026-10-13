@@ -5,7 +5,7 @@ use crate::Route;
 use crate::api::{self, error_message};
 use crate::model::{BoiView, Mode, Outcome, Period, RoomView, format_date};
 use crate::palette;
-use crate::rules::{self, PlayerStats, SideResult};
+use crate::rules::{self, Firsts, Moment, PlayerStats, SideResult};
 use dioxus::prelude::*;
 
 #[component]
@@ -560,8 +560,15 @@ fn Stats(view: RoomView) -> Element {
             None => rsx! { p { class: "muted", "Carregando…" } },
             Some(Err(e)) => rsx! { p { class: "error", "{error_message(e)}" } },
             Some(Ok(list)) => match (a, b, list.as_slice()) {
-                (Some(a), Some(b), [sa, sb]) => compare_table(&view, (a, sa), (b, sb)),
-                (_, _, [sa, ..]) => stats_table(&view, sa.clone()),
+                (Some(a), Some(b), [ra, rb]) => {
+                    compare_table(&view, (a, &ra.stats), (b, &rb.stats))
+                }
+                (Some(a), _, [ra, ..]) => rsx! {
+                    {stats_table(&view, ra.stats.clone())}
+                    if let Some(f) = &ra.firsts {
+                        {firsts_list(&view, a, f)}
+                    }
+                },
                 _ => rsx! {},
             },
         },
@@ -648,6 +655,46 @@ fn Stats(view: RoomView) -> Element {
                     "Lambretas e reversas: aplicadas/sofridas. "
                 }
                 "Nas duplas, a vitória da dupla conta para os dois parceiros."
+            }
+        }
+    }
+}
+
+/// Primeiras vezes do ano: quem saiu, quem ganhou a primeira mão, o
+/// primeiro boi, a primeira lambreta e a primeira reversa.
+fn firsts_list(view: &RoomView, year: Period, f: &Firsts) -> Element {
+    let names = |ids: &[i64]| view.pair_name(ids);
+    let against = |m: &Moment, word: &str| {
+        let others: Vec<String> = m.against.iter().map(|ids| names(ids)).collect();
+        if others.is_empty() {
+            String::new()
+        } else {
+            format!(" {word} {}", others.join(", "))
+        }
+    };
+    let line = |m: &Option<Moment>, word: &str| match m {
+        None => "Ainda não teve.".to_string(),
+        Some(m) => format!(
+            "{}{} (boi {}, {})",
+            names(&m.by),
+            against(m, word),
+            m.boi_number,
+            format_date(m.started_at)
+        ),
+    };
+    let rows = [
+        ("Primeira saída", line(&f.saida, "")),
+        ("Primeira mão ganha", line(&f.mao, "contra")),
+        ("Primeiro boi", line(&f.boi, "contra")),
+        ("Primeira lambreta", line(&f.lambreta, "em")),
+        ("Primeira lambreta reversa", line(&f.reversa, "em")),
+    ];
+    rsx! {
+        h3 { "Primeiras de {year.label()}" }
+        dl { class: "firsts",
+            for (title, text) in rows {
+                dt { key: "{title}", "{title}" }
+                dd { "{text}" }
             }
         }
     }

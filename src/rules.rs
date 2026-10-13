@@ -8,7 +8,7 @@
 //! - Saída: enquanto nenhuma mão do boi tiver vencedor, sai quem tem a maior carroça
 //!   (o app pergunta). Depois disso, a saída passa para o próximo jogador da roda.
 
-use crate::model::{Hand, Mode, Outcome};
+use crate::model::{BoiView, Hand, Mode, Outcome, sides_of};
 use serde::{Deserialize, Serialize};
 
 /// Bolinhas da cruz: uma em cada braço.
@@ -241,6 +241,83 @@ pub fn compute_stats<'a>(
     stats
 }
 
+/// Um acontecimento marcante: quem fez, contra quem (quando houver) e em
+/// que boi. Os lados são listas de ids de jogador.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Moment {
+    pub boi_number: u32,
+    pub started_at: i64,
+    pub by: Vec<i64>,
+    pub against: Vec<Vec<i64>>,
+}
+
+/// As primeiras vezes de um período (pensado para o ano).
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct Firsts {
+    /// Quem saiu na primeira mão.
+    pub saida: Option<Moment>,
+    /// Quem ganhou a primeira mão (empates não contam).
+    pub mao: Option<Moment>,
+    pub boi: Option<Moment>,
+    /// `against`: só quem levou a lambreta.
+    pub lambreta: Option<Moment>,
+    pub reversa: Option<Moment>,
+}
+
+/// Primeiras vezes numa lista de bois, do mais antigo para o mais recente.
+pub fn firsts<'a>(mode: Mode, bois: impl IntoIterator<Item = &'a BoiView>) -> Firsts {
+    let mut f = Firsts::default();
+    for boi in bois {
+        let sides = sides_of(mode, &boi.seating);
+        let moment = |by: Vec<i64>, against: Vec<Vec<i64>>| Moment {
+            boi_number: boi.number,
+            started_at: boi.started_at,
+            by,
+            against,
+        };
+        let others = |w: usize| -> Vec<Vec<i64>> {
+            (0..sides.len())
+                .filter(|&s| s != w)
+                .map(|s| sides[s].clone())
+                .collect()
+        };
+        if let Some(h) = boi.hands.first()
+            && f.saida.is_none()
+        {
+            f.saida = boi
+                .seating
+                .get(h.starter_seat)
+                .map(|&id| moment(vec![id], Vec::new()));
+        }
+        if f.mao.is_none()
+            && let Some(w) = boi.hands.iter().find_map(|h| h.winner_side)
+        {
+            f.mao = Some(moment(sides[w].clone(), others(w)));
+        }
+        let state = evaluate(mode, boi.seating.len(), &boi.hands);
+        let Some(w) = state.winner else { continue };
+        if f.boi.is_none() {
+            f.boi = Some(moment(sides[w].clone(), others(w)));
+        }
+        let hit = |kind: SideResult| -> Vec<Vec<i64>> {
+            (0..sides.len())
+                .filter(|&s| state.results[s] == Some(kind))
+                .map(|s| sides[s].clone())
+                .collect()
+        };
+        for (slot, kind) in [
+            (&mut f.lambreta, SideResult::Lambreta),
+            (&mut f.reversa, SideResult::LambretaReversa),
+        ] {
+            let victims = hit(kind);
+            if slot.is_none() && !victims.is_empty() {
+                *slot = Some(moment(sides[w].clone(), victims));
+            }
+        }
+    }
+    f
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -374,5 +451,40 @@ mod tests {
         let stats = compute_stats([(Mode::Individual, &seating[..], &h[..])]);
         assert_eq!(stats[0].bois_jogados, 0);
         assert_eq!(stats[0].maos_ganhas, 1);
+    }
+
+    #[test]
+    fn primeiras_vezes() {
+        let boi = |number: u32, winners: &[Option<usize>]| BoiView {
+            id: i64::from(number),
+            number,
+            seating: vec![1, 2, 3, 4],
+            hands: hands(winners, 4),
+            colors: Vec::new(),
+            started_at: i64::from(number),
+        };
+        let bois = [
+            // Boi 1: empate, depois a dupla B (2 e 4) leva por 4 a 2.
+            boi(
+                1,
+                &[None, Some(1), Some(0), Some(1), Some(0), Some(1), Some(1)],
+            ),
+            // Boi 2: a dupla A faz 4 a 0.
+            boi(2, &[Some(0); 4]),
+            // Boi 3: B marca 1, A faz 4 seguidas.
+            boi(3, &[Some(1), Some(0), Some(0), Some(0), Some(0)]),
+        ];
+        let f = firsts(Mode::Duplas, &bois);
+        assert_eq!(f.saida.unwrap().by, vec![1]);
+        let mao = f.mao.unwrap();
+        assert_eq!((mao.boi_number, mao.by), (1, vec![2, 4]));
+        assert_eq!(f.boi.unwrap().by, vec![2, 4]);
+        let lamb = f.lambreta.unwrap();
+        assert_eq!(
+            (lamb.boi_number, lamb.by, lamb.against),
+            (2, vec![1, 3], vec![vec![2, 4]])
+        );
+        assert_eq!(f.reversa.unwrap().boi_number, 3);
+        assert_eq!(firsts(Mode::Duplas, &[]), Firsts::default());
     }
 }

@@ -1,7 +1,7 @@
 //! Tipos trocados entre o servidor e o navegador.
 
 use crate::palette;
-use crate::rules::{self, BoiState, PlayerStats};
+use crate::rules::{self, BoiState, Firsts, PlayerStats};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -265,6 +265,13 @@ impl RoomView {
             .flat_map(char::to_uppercase)
             .collect()
     }
+}
+
+/// Números de um período. `firsts` só vem quando o período é um ano.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PeriodReport {
+    pub stats: Vec<PlayerStats>,
+    pub firsts: Option<Firsts>,
 }
 
 /// Quantos bois o histórico mostra por vez.
