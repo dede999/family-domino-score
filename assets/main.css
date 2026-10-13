@@ -276,6 +276,14 @@ button.swatch:disabled { opacity: 0.2; cursor: default; }
 
 .period-pick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
 .compare-head { font-weight: 600; }
+.highlight {
+  padding: var(--sp-3);
+  border-radius: 8px;
+  background: color-mix(in oklch, var(--win) 12%, var(--card));
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
 .table-wrap { overflow-x: auto; }
 .stats-table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
 .stats-table th, .stats-table td {

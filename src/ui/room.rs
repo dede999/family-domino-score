@@ -3,9 +3,9 @@ use super::new_room::{PlayerDraft, PlayersEditor, seat_label};
 use super::{Cross, CrossEnd, current_user, sleep_ms, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
-use crate::model::{BoiView, Mode, Outcome, Period, RoomView, format_date};
+use crate::model::{BoiView, Mode, Outcome, Period, PeriodReport, RoomView, format_date};
 use crate::palette;
-use crate::rules::{self, Firsts, Moment, PlayerStats, SideResult};
+use crate::rules::{self, Firsts, Moment, PlayerStats, Record, SideResult};
 use dioxus::prelude::*;
 
 #[component]
@@ -564,6 +564,7 @@ fn Stats(view: RoomView) -> Element {
                     compare_table(&view, (a, &ra.stats), (b, &rb.stats))
                 }
                 (Some(a), _, [ra, ..]) => rsx! {
+                    {highlights(&view, a, ra)}
                     {stats_table(&view, ra.stats.clone())}
                     if let Some(f) = &ra.firsts {
                         {firsts_list(&view, a, f)}
@@ -655,6 +656,64 @@ fn Stats(view: RoomView) -> Element {
                     "Lambretas e reversas: aplicadas/sofridas. "
                 }
                 "Nas duplas, a vitória da dupla conta para os dois parceiros."
+            }
+        }
+    }
+}
+
+/// Quem fez melhor no período: mais bois ganhos, depois % de mãos. Nas
+/// duplas, a melhor dupla; o melhor jogador só aparece se não for ela.
+fn highlights(view: &RoomView, period: Period, report: &PeriodReport) -> Element {
+    let line = |r: Record| {
+        format!(
+            "{} de {} bois, {}% das mãos",
+            r.bois_ganhos,
+            r.bois_jogados,
+            r.hand_share()
+        )
+    };
+    let pairs = rules::best(&report.pairs, |p| p.record);
+    let players = rules::best(&report.stats, |s| s.record());
+    let mut rows: Vec<(&str, String)> = Vec::new();
+    for p in &pairs {
+        rows.push((
+            "Dupla",
+            format!(
+                "{}: {}",
+                view.pair_name(&[p.players.0, p.players.1]),
+                line(p.record)
+            ),
+        ));
+    }
+    let mut pair_ids: Vec<i64> = pairs
+        .iter()
+        .flat_map(|p| [p.players.0, p.players.1])
+        .collect();
+    let mut player_ids: Vec<i64> = players.iter().map(|s| s.player_id).collect();
+    pair_ids.sort();
+    player_ids.sort();
+    if let Some(top) = players.first()
+        && player_ids != pair_ids
+    {
+        let names: Vec<String> = player_ids.iter().map(|&id| view.player_name(id)).collect();
+        rows.push((
+            "Jogador",
+            format!("{}: {}", names.join(" e "), line(top.record())),
+        ));
+    }
+    if rows.is_empty() {
+        return rsx! {};
+    }
+    rsx! {
+        div { class: "highlight",
+            h3 { "Destaque de {period.label()}" }
+            for (who, text) in rows {
+                p { key: "{who}{text}",
+                    if view.mode == Mode::Duplas {
+                        span { class: "muted", "{who}: " }
+                    }
+                    "{text}"
+                }
             }
         }
     }

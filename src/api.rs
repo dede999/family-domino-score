@@ -359,6 +359,7 @@ pub async fn room_stats(
             let inside = || bois.iter().filter(move |b| p.contains(b.started_at));
             PeriodReport {
                 stats: bois_stats(room.mode, inside()),
+                pairs: crate::rules::pair_records(room.mode, inside()),
                 firsts: matches!(p, Period::Year { .. })
                     .then(|| crate::rules::firsts(room.mode, inside())),
             }

@@ -8,8 +8,9 @@
 //! - Saída: enquanto nenhuma mão do boi tiver vencedor, sai quem tem a maior carroça
 //!   (o app pergunta). Depois disso, a saída passa para o próximo jogador da roda.
 
-use crate::model::{BoiView, Hand, Mode, Outcome, sides_of};
+use crate::model::{BoiView, Hand, Mode, Outcome, pair_key, sides_of};
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 
 /// Bolinhas da cruz: uma em cada braço.
 pub const POINTS_TO_WIN: u32 = 4;
@@ -239,6 +240,107 @@ pub fn compute_stats<'a>(
         }
     }
     stats
+}
+
+/// O que decide o destaque de um período.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Record {
+    pub bois_jogados: u32,
+    pub bois_ganhos: u32,
+    pub maos_jogadas: u32,
+    pub maos_ganhas: u32,
+}
+
+impl Record {
+    /// Mais bois ganhos; empate vai para o maior % de mãos ganhas.
+    pub fn cmp_best(&self, other: &Record) -> Ordering {
+        let share = |a: &Record, b: &Record| u64::from(a.maos_ganhas) * u64::from(b.maos_jogadas);
+        self.bois_ganhos
+            .cmp(&other.bois_ganhos)
+            .then_with(|| share(self, other).cmp(&share(other, self)))
+    }
+
+    /// % de mãos ganhas, arredondado.
+    pub fn hand_share(&self) -> u32 {
+        (self.maos_ganhas * 100 + self.maos_jogadas / 2)
+            .checked_div(self.maos_jogadas)
+            .unwrap_or(0)
+    }
+}
+
+impl PlayerStats {
+    pub fn record(&self) -> Record {
+        Record {
+            bois_jogados: self.bois_jogados,
+            bois_ganhos: self.bois_ganhos,
+            maos_jogadas: self.maos_jogadas,
+            maos_ganhas: self.maos_ganhas,
+        }
+    }
+}
+
+/// Desempenho de uma dupla (os dois ids em ordem crescente).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PairRecord {
+    pub players: (i64, i64),
+    pub record: Record,
+}
+
+/// Desempenho de cada dupla que jogou. Vazio fora do modo duplas.
+pub fn pair_records<'a>(
+    mode: Mode,
+    bois: impl IntoIterator<Item = &'a BoiView>,
+) -> Vec<PairRecord> {
+    let mut pairs: Vec<PairRecord> = Vec::new();
+    if mode != Mode::Duplas {
+        return pairs;
+    }
+    for boi in bois {
+        let state = evaluate(mode, boi.seating.len(), &boi.hands);
+        for (side, ids) in sides_of(mode, &boi.seating).iter().enumerate() {
+            let [a, b] = ids[..] else { continue };
+            let key = pair_key(a, b);
+            let i = match pairs.iter().position(|p| p.players == key) {
+                Some(i) => i,
+                None => {
+                    pairs.push(PairRecord {
+                        players: key,
+                        record: Record::default(),
+                    });
+                    pairs.len() - 1
+                }
+            };
+            let r = &mut pairs[i].record;
+            r.maos_jogadas += boi.hands.len() as u32;
+            r.maos_ganhas += boi
+                .hands
+                .iter()
+                .filter(|h| h.winner_side == Some(side))
+                .count() as u32;
+            if let Some(w) = state.winner {
+                r.bois_jogados += 1;
+                if w == side {
+                    r.bois_ganhos += 1;
+                }
+            }
+        }
+    }
+    pairs
+}
+
+/// Os melhores de uma lista pelo critério do destaque (mais de um se
+/// empatarem em tudo). Vazio se ninguém ganhou boi.
+pub fn best<T>(items: &[T], record: impl Fn(&T) -> Record) -> Vec<&T> {
+    let Some(top) = items.iter().map(&record).max_by(|a, b| a.cmp_best(b)) else {
+        return Vec::new();
+    };
+    if top.bois_ganhos == 0 {
+        return Vec::new();
+    }
+    items
+        .iter()
+        .filter(|i| record(i).cmp_best(&top) == Ordering::Equal)
+        .collect()
 }
 
 /// Um acontecimento marcante: quem fez, contra quem (quando houver) e em
@@ -486,5 +588,49 @@ mod tests {
         );
         assert_eq!(f.reversa.unwrap().boi_number, 3);
         assert_eq!(firsts(Mode::Duplas, &[]), Firsts::default());
+    }
+
+    #[test]
+    fn destaque_por_bois_e_depois_por_maos() {
+        let r = |bg, mg, mj| Record {
+            bois_jogados: 3,
+            bois_ganhos: bg,
+            maos_jogadas: mj,
+            maos_ganhas: mg,
+        };
+        // Mais bois ganha, mesmo com % de mãos menor.
+        let list = [r(1, 9, 10), r(2, 8, 20), r(2, 10, 20)];
+        assert_eq!(best(&list, |x| *x), vec![&list[2]]);
+        // 4 de 8 empata com 8 de 16: os dois são destaque.
+        let list = [r(2, 4, 8), r(2, 8, 16), r(1, 9, 9)];
+        assert_eq!(best(&list, |x| *x).len(), 2);
+        // Ninguém ganhou boi: sem destaque.
+        assert!(best(&[r(0, 3, 5)], |x| *x).is_empty());
+        assert_eq!(r(0, 2, 3).hand_share(), 67);
+    }
+
+    #[test]
+    fn duplas_trocam_e_cada_par_tem_seu_registro() {
+        let boi = |seating: Vec<i64>, winners: &[Option<usize>]| BoiView {
+            id: 1,
+            number: 1,
+            seating,
+            hands: hands(winners, 4),
+            colors: Vec::new(),
+            started_at: 0,
+        };
+        let bois = [
+            boi(vec![1, 2, 3, 4], &[Some(0); 4]),
+            boi(
+                vec![1, 3, 2, 4],
+                &[Some(1), Some(0), Some(0), Some(0), Some(0)],
+            ),
+        ];
+        let pairs = pair_records(Mode::Duplas, &bois);
+        let get = |a, b| pairs.iter().find(|p| p.players == (a, b)).unwrap().record;
+        assert_eq!(get(1, 3).bois_ganhos, 1);
+        assert_eq!((get(1, 2).bois_ganhos, get(1, 2).maos_ganhas), (1, 4));
+        assert_eq!((get(3, 4).bois_jogados, get(3, 4).maos_ganhas), (1, 1));
+        assert!(pair_records(Mode::Individual, &bois).is_empty());
     }
 }

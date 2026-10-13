@@ -1,7 +1,7 @@
 //! Tipos trocados entre o servidor e o navegador.
 
 use crate::palette;
-use crate::rules::{self, BoiState, Firsts, PlayerStats};
+use crate::rules::{self, BoiState, Firsts, PairRecord, PlayerStats};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -271,6 +271,8 @@ impl RoomView {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PeriodReport {
     pub stats: Vec<PlayerStats>,
+    /// Desempenho de cada dupla; vazio no modo individual.
+    pub pairs: Vec<PairRecord>,
     pub firsts: Option<Firsts>,
 }
 
