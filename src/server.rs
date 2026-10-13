@@ -1,8 +1,8 @@
 //! Código só do servidor: banco (Turso/libsql), sessões e avisos em tempo real.
 
 use crate::model::{
-    BoiView, Hand, Mode, Outcome, PairColors, Player, RoomView, UserInfo, pair_key,
-    resolve_side_colors, sides_of,
+    BoiView, Hand, Mode, Outcome, PairColors, Player, RoomView, UserInfo, history_page,
+    pair_key, resolve_side_colors, sides_of,
 };
 use crate::palette;
 use dioxus::fullstack::{HeaderMap, HttpError, ServerFnError, StatusCode};
@@ -431,6 +431,7 @@ pub async fn load_room_view(
     user: Option<&UserInfo>,
 ) -> Result<RoomView, ServerFnError> {
     let players = room_players(conn, room.id).await?;
+    let bois = room_bois(conn, room.id).await?;
     let is_owner = user.is_some_and(|u| u.id == room.owner_id);
     let can_edit = is_owner
         || user.is_some_and(|u| players.iter().any(|p| p.user_id == Some(u.id)));
@@ -442,7 +443,12 @@ pub async fn load_room_view(
         is_owner,
         can_edit,
         players: players.into_iter().map(|p| p.player).collect(),
-        bois: room_bois(conn, room.id).await?,
+        current: bois.last().cloned(),
+        history: history_page(room.mode, &bois, None),
+        stats: crate::rules::compute_stats(
+            bois.iter()
+                .map(|b| (room.mode, b.seating.as_slice(), b.hands.as_slice())),
+        ),
         pairs: room_pairs(conn, room.id).await?,
     })
 }

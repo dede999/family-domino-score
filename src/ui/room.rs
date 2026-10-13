@@ -497,7 +497,7 @@ fn EditPlayers(view: RoomView, on_done: EventHandler<bool>) -> Element {
 
 #[component]
 fn Stats(view: RoomView) -> Element {
-    let mut stats = view.stats();
+    let mut stats = view.stats.clone();
     if stats.is_empty() {
         return rsx! {};
     }
@@ -544,18 +544,32 @@ fn Stats(view: RoomView) -> Element {
     }
 }
 
-/// Bois já terminados, agrupados por dia de jogo.
+/// Bois já terminados, agrupados por dia de jogo. A sala traz os 10 mais
+/// recentes; "Ver mais" busca os 10 anteriores de cada vez.
 #[component]
 fn History(view: RoomView) -> Element {
-    let finished: Vec<&BoiView> = view
-        .bois
+    // Páginas mais antigas já buscadas. Ficam guardadas quando a sala
+    // recarrega, porque bois antigos não mudam.
+    let mut older = use_signal(Vec::<BoiView>::new);
+    let mut older_more = use_signal(|| None::<bool>);
+    let mut loading = use_signal(|| false);
+    let mut error = use_signal(|| None::<String>);
+
+    // Se um boi terminou depois da busca, a primeira página andou e pode
+    // repetir bois das páginas antigas; fica só o que vem depois dela.
+    let first = &view.history.bois;
+    let oldest_first = first.last().map(|b| b.id);
+    let older_list = older.read();
+    let finished: Vec<&BoiView> = first
         .iter()
-        .filter(|b| view.state(b).finished())
-        .rev()
+        .chain(older_list.iter().filter(|b| oldest_first.is_none_or(|id| b.id < id)))
         .collect();
+    let more = older_more().unwrap_or(view.history.more);
     if finished.is_empty() {
         return rsx! {};
     }
+    let before = finished.last().map(|b| b.id).unwrap_or_default();
+
     let mut days: Vec<(String, Vec<&BoiView>)> = Vec::new();
     for boi in finished {
         let day = format_date(boi.started_at);
@@ -564,6 +578,7 @@ fn History(view: RoomView) -> Element {
             _ => days.push((day, vec![boi])),
         }
     }
+    let code = view.code.clone();
     rsx! {
         section { class: "card",
             h2 { "Histórico" }
@@ -576,6 +591,31 @@ fn History(view: RoomView) -> Element {
                         }
                     }
                 }
+            }
+            if more {
+                button {
+                    r#type: "button",
+                    disabled: loading(),
+                    onclick: move |_| {
+                        let code = code.clone();
+                        async move {
+                            loading.set(true);
+                            match api::room_history(code, before).await {
+                                Ok(page) => {
+                                    older.write().extend(page.bois);
+                                    older_more.set(Some(page.more));
+                                    error.set(None);
+                                }
+                                Err(e) => error.set(Some(error_message(&e))),
+                            }
+                            loading.set(false);
+                        }
+                    },
+                    if loading() { "Carregando…" } else { "Ver mais" }
+                }
+            }
+            if let Some(e) = error() {
+                p { class: "error", "{e}" }
             }
         }
     }

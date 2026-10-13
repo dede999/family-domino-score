@@ -1,6 +1,6 @@
 //! Funções de servidor. No navegador, cada uma vira uma chamada HTTP.
 
-use crate::model::{Mode, Outcome, PlayerInput, RoomSummary, RoomView, UserInfo};
+use crate::model::{HistoryPage, Mode, Outcome, PlayerInput, RoomSummary, RoomView, UserInfo};
 use crate::rules::PlayerStats;
 use dioxus::fullstack::{Json, ServerEvents, SetCookie, SetHeader};
 use dioxus::prelude::*;
@@ -303,6 +303,15 @@ pub async fn get_room(code: String) -> Result<RoomView, ServerFnError> {
     load_room_view(&conn, &room, user.as_ref()).await
 }
 
+/// Próxima página do histórico: bois terminados mais antigos que `before`.
+#[post("/api/salas/{code}/historico")]
+pub async fn room_history(code: String, before: i64) -> Result<HistoryPage, ServerFnError> {
+    let conn = conn().await?;
+    let room = room_by_code(&conn, &code).await?;
+    let bois = room_bois(&conn, room.id).await?;
+    Ok(crate::model::history_page(room.mode, &bois, Some(before)))
+}
+
 /// Começa um boi novo com a ordem atual da roda.
 #[post("/api/salas/{code}/boi", headers: HeaderMap)]
 pub async fn start_boi(code: String) -> Result<(), ServerFnError> {
@@ -434,8 +443,9 @@ pub async fn update_players(code: String, players: Vec<PlayerInput>) -> Result<(
 
     // Jogador que já jogou algum boi não pode ser removido, para não perder o histórico.
     let kept: Vec<i64> = players.iter().filter_map(|p| p.id).collect();
+    let bois = room_bois(&conn, room.id).await?;
     for p in &view.players {
-        if !kept.contains(&p.id) && view.bois.iter().any(|b| b.seating.contains(&p.id)) {
+        if !kept.contains(&p.id) && bois.iter().any(|b| b.seating.contains(&p.id)) {
             return Err(user_err(
                 StatusCode::CONFLICT,
                 format!("{} já jogou nesta sala e não pode ser removido.", p.name),

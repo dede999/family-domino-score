@@ -193,8 +193,13 @@ pub struct RoomView {
     pub can_edit: bool,
     /// Ordem atual dos jogadores na roda.
     pub players: Vec<Player>,
-    /// Do mais antigo para o mais recente. O último é o boi atual.
-    pub bois: Vec<BoiView>,
+    /// O boi mais recente, terminado ou não.
+    pub current: Option<BoiView>,
+    /// Primeira página do histórico: bois terminados, do mais recente para o
+    /// mais antigo. As outras vêm de `api::room_history`.
+    pub history: HistoryPage,
+    /// Estatísticas de todos os bois da sala, calculadas no servidor.
+    pub stats: Vec<PlayerStats>,
     /// Cores das duplas já formadas nesta sala.
     pub pairs: Vec<PairColors>,
 }
@@ -220,7 +225,7 @@ impl RoomView {
     }
 
     pub fn current(&self) -> Option<&BoiView> {
-        self.bois.last()
+        self.current.as_ref()
     }
 
     pub fn state(&self, boi: &BoiView) -> BoiState {
@@ -258,13 +263,33 @@ impl RoomView {
             .flat_map(char::to_uppercase)
             .collect()
     }
+}
 
-    pub fn stats(&self) -> Vec<PlayerStats> {
-        rules::compute_stats(
-            self.bois
-                .iter()
-                .map(|b| (self.mode, b.seating.as_slice(), b.hands.as_slice())),
-        )
+/// Quantos bois o histórico mostra por vez.
+pub const HISTORY_PAGE: usize = 10;
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct HistoryPage {
+    /// Do mais recente para o mais antigo.
+    pub bois: Vec<BoiView>,
+    /// Ainda há bois mais antigos que os desta página.
+    pub more: bool,
+}
+
+/// Página do histórico: até `HISTORY_PAGE` bois terminados com id menor que
+/// `before` (ou os mais recentes, sem `before`). `bois` vem do mais antigo
+/// para o mais recente.
+#[cfg_attr(not(feature = "server"), allow(dead_code))]
+pub fn history_page(mode: Mode, bois: &[BoiView], before: Option<i64>) -> HistoryPage {
+    let mut finished = bois
+        .iter()
+        .rev()
+        .filter(|b| before.is_none_or(|id| b.id < id))
+        .filter(|b| rules::evaluate(mode, b.seating.len(), &b.hands).finished());
+    let page: Vec<BoiView> = finished.by_ref().take(HISTORY_PAGE).cloned().collect();
+    HistoryPage {
+        bois: page,
+        more: finished.next().is_some(),
     }
 }
 
@@ -356,5 +381,36 @@ mod tests {
         // 2026-10-12 02:00 UTC ainda é dia 11 em Brasília.
         assert_eq!(super::format_date(1_791_770_400), "11/10/2026");
         assert_eq!(super::format_date(0), "31/12/1969");
+    }
+
+    /// Boi de duplas: terminado (4 batidas do lado 0) ou com uma mão só.
+    fn boi(id: i64, finished: bool) -> BoiView {
+        let win = Hand { starter_seat: 0, outcome: Outcome::Batida, winner_side: Some(0) };
+        BoiView {
+            id,
+            number: id as u32,
+            seating: RODA.to_vec(),
+            hands: vec![win; if finished { 4 } else { 1 }],
+            colors: Vec::new(),
+            started_at: 0,
+        }
+    }
+
+    #[test]
+    fn historico_em_paginas_de_dez() {
+        // 23 bois terminados e o atual em andamento.
+        let mut bois: Vec<BoiView> = (1..=23).map(|id| boi(id, true)).collect();
+        bois.push(boi(24, false));
+        let ids = |p: &HistoryPage| p.bois.iter().map(|b| b.id).collect::<Vec<_>>();
+
+        let first = history_page(Mode::Duplas, &bois, None);
+        assert_eq!(ids(&first), (14..=23).rev().collect::<Vec<_>>());
+        assert!(first.more);
+        let second = history_page(Mode::Duplas, &bois, Some(14));
+        assert_eq!(ids(&second), (4..=13).rev().collect::<Vec<_>>());
+        assert!(second.more);
+        let last = history_page(Mode::Duplas, &bois, Some(4));
+        assert_eq!(ids(&last), vec![3, 2, 1]);
+        assert!(!last.more);
     }
 }
