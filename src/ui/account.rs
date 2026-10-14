@@ -1,7 +1,7 @@
 //! Telas da conta: entrar com código, esqueci a senha, minha conta e troca
 //! de senha pelo link do administrador.
 
-use super::{current_user, use_me_resource};
+use super::{TopBar, current_user, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
 use dioxus::prelude::*;
@@ -64,7 +64,7 @@ fn CodeLogin(reset: bool) -> Element {
 
     rsx! {
         main { class: "page",
-            header { class: "top",
+            TopBar {
                 Link { to: Route::Home {}, "← Início" }
             }
             section { class: "card",
@@ -167,7 +167,7 @@ pub fn LinkReset(username: String, token: String) -> Element {
 
     rsx! {
         main { class: "page",
-            header { class: "top",
+            TopBar {
                 Link { to: Route::Home {}, "← Início" }
             }
             section { class: "card",
@@ -230,7 +230,7 @@ pub fn MyAccount() -> Element {
     };
     rsx! {
         main { class: "page",
-            header { class: "top",
+            TopBar {
                 Link { to: Route::Home {}, "← Início" }
             }
             {body}

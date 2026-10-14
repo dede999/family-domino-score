@@ -1,4 +1,4 @@
-use super::{current_user, use_me_resource};
+use super::{TopBar, current_user, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
 use dioxus::prelude::*;
@@ -11,7 +11,7 @@ pub fn Home() -> Element {
 
     rsx! {
         main { class: "page",
-            header { class: "top",
+            TopBar {
                 h1 { "Placar de Dominó" }
                 if let Some(user) = &user {
                     div { class: "who",

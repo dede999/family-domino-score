@@ -1,5 +1,5 @@
 use super::colors::{ColorPicker, Swatch};
-use super::{current_user, use_me_resource};
+use super::{TopBar, current_user, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
 use crate::model::Mode;
@@ -83,7 +83,7 @@ pub fn NewRoom() -> Element {
 
     rsx! {
         main { class: "page",
-            header { class: "top",
+            TopBar {
                 Link { to: Route::Home {}, "← Início" }
             }
             section { class: "page-head",

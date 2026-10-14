@@ -59,6 +59,8 @@ fn App() -> Element {
         document::Title { "Placar de Dominó" }
         document::Meta { name: "viewport", content: "width=device-width, initial-scale=1" }
         document::Stylesheet { href: CSS }
+        // Aplica o tema antes de a página aparecer (ver `ui::theme`).
+        document::Script { "{ui::THEME_SCRIPT}" }
         Router::<Route> {}
     }
 }

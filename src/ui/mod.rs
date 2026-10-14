@@ -5,16 +5,20 @@ mod history;
 mod home;
 mod new_room;
 mod room;
+mod theme;
+mod top_bar;
 
 pub use account::{EnterWithCode, ForgotPassword, LinkReset, MyAccount};
 pub use home::Home;
 pub use new_room::NewRoom;
 pub use room::Room;
+pub use theme::THEME_SCRIPT;
 
 use crate::model::Outcome;
 use crate::palette;
 use crate::views::UserInfo;
 use dioxus::prelude::*;
+pub use top_bar::TopBar;
 
 pub type MeResource = Resource<Result<Option<UserInfo>, ServerFnError>>;
 
