@@ -1,6 +1,7 @@
 //! Histórico da sala: uma sanfona por dia, com um cartão por boi. Tocar no
 //! cartão abre uma gaveta de baixo para cima com o boi inteiro.
 
+use super::drawer::Drawer;
 use super::room::{Crosses, FinalResult, HandStrip};
 use crate::api::{self, error_message};
 use crate::model::BoiView;
@@ -230,35 +231,19 @@ fn BoiDrawer(view: RoomView, boi: BoiView, on_close: EventHandler<()>) -> Elemen
         .and_then(|h| boi.seating.get(h.starter_seat))
         .map(|&id| view.player_name(id));
     rsx! {
-        div { class: "drawer-backdrop", onclick: move |_| on_close.call(()),
-            div {
-                class: "drawer",
-                role: "dialog",
-                "aria-modal": "true",
-                "aria-label": "Boi nº {boi.number}",
-                onclick: move |e| e.stop_propagation(),
-                div { class: "drawer-head",
-                    div {
-                        h2 { "Boi nº {boi.number}" }
-                        p { class: "muted", "{format_date(boi.started_at)}" }
-                    }
-                    button {
-                        r#type: "button",
-                        class: "secondary",
-                        onclick: move |_| on_close.call(()),
-                        "Fechar"
-                    }
-                }
-                Crosses { view: view.clone(), boi: boi.clone() }
-                FinalResult { view: view.clone(), boi: boi.clone() }
-                dl { class: "stats",
-                    dt { "Saiu na primeira mão válida" }
-                    dd { {first_starter.unwrap_or_else(|| "—".into())} }
-                    dt { "Mãos" }
-                    dd { "{boi.hands.len()}" }
-                }
-                HandStrip { view: view.clone(), boi: boi.clone(), colors }
+        Drawer {
+            title: "Boi nº {boi.number}",
+            subtitle: format_date(boi.started_at),
+            on_close,
+            Crosses { view: view.clone(), boi: boi.clone() }
+            FinalResult { view: view.clone(), boi: boi.clone() }
+            dl { class: "stats",
+                dt { "Saiu na primeira mão válida" }
+                dd { {first_starter.unwrap_or_else(|| "—".into())} }
+                dt { "Mãos" }
+                dd { "{boi.hands.len()}" }
             }
+            HandStrip { view: view.clone(), boi: boi.clone(), colors }
         }
     }
 }
