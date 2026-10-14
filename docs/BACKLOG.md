@@ -37,8 +37,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 15. [x] Guia de uso: "?" por tela e troca de tema no topo (ver a seção própria).
 16. [x] CD pelo GitHub Actions (ver Infra). Pedido em 2026-10-14, passou
     na frente do guia.
-17. [ ] Comprimir a interface (ver Infra). Fila pedida em 2026-10-14:
-18. [ ] README.md.
+17. [x] Comprimir a interface (ver Infra). Fila pedida em 2026-10-14:
+18. [x] README.md.
 19. [ ] Tabela de estatísticas sem rolar para o lado no celular.
 20. [ ] Envio de e-mail de verdade (ver Infra → Recuperar senha).
 21. [ ] Play Store (ver "Futuro: distribuição").
@@ -295,9 +295,11 @@ primeiro uso e pode ser aberto de novo quando quiser.
     WhatsApp e SMS descartados por agora: a API oficial do WhatsApp pede
     verificação da empresa na Meta e modelos aprovados; SMS é pago por
     mensagem e pede cadastro de remetente.
-- [ ] **Comprimir a interface** (wasm de ~3 MB sem compressão): ativar
-  gzip/brotli no servidor ou entregar os arquivos já comprimidos. Importa
-  para quem abre pelo 4G.
+- [x] **Comprimir a interface** (feito em 2026-10-14): `pre_compress = true`
+  no `Dioxus.toml`. O `dx bundle` grava um `.br` ao lado de cada arquivo e o
+  servidor do Dioxus entrega o `.br` a quem aceita Brotli (o Safari só pede
+  em HTTPS). O wasm caiu de 3,0 MB para 647 KB em produção. Ficaram sem
+  compressão a página (HTML do SSR) e as respostas da API, que são pequenas.
 - [x] **CD** (feito em 2026-10-14, ver `docs/DEPLOY.md`). Compilar no GitHub Actions com cache e só
   mandar a imagem pronta ao Cloud Run (no Cloud Build cada deploy leva
   ~15 min, compilando tudo do zero). Não dá para automatizar o deploy antes de
