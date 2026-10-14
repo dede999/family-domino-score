@@ -1,0 +1,74 @@
+# Publica no Cloud Run depois que o CI passa num push na main.
+# Entra no Google Cloud sem chave guardada (Workload Identity Federation):
+# só a main deste repositório pode assumir a conta github-deploy.
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+# Um deploy de cada vez; o próximo espera o anterior terminar.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  REGION: southamerica-east1
+  IMAGE: southamerica-east1-docker.pkg.dev/domino-237616/cloud-run-source-deploy/placar
+
+jobs:
+  deploy:
+    # Só push na main deste repositório (nunca PR, nem branch de fork).
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # O commit que passou no CI (não necessariamente o último da main).
+      SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      # Cache separado do CI: aqui é compilação release.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: deploy
+
+      - name: Instalar o dx
+        run: |
+          curl -L --proto '=https' --tlsv1.2 -sSf \
+            https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+          cargo binstall dioxus-cli@0.7.10 --no-confirm
+
+      - name: Compilar
+        run: dx bundle --platform web --release
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/276818208775/locations/global/workloadIdentityPools/github/providers/github-oidc
+          service_account: github-deploy@domino-237616.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Imagem
+        run: |
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build -f runtime.Dockerfile -t "$IMAGE:$SHA" target/dx/placar/release/web
+          docker push "$IMAGE:$SHA"
+
+      # Variáveis e segredo do serviço continuam os mesmos; só troca a imagem.
+      - name: Publicar
+        run: gcloud run deploy placar --image "$IMAGE:$SHA" --region "$REGION" --quiet
