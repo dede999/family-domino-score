@@ -732,7 +732,7 @@ fn Stats(view: RoomView) -> Element {
                 if b.is_some() {
                     "Lamb.: lambretas aplicadas. "
                 } else {
-                    "Lambretas e reversas: aplicadas/sofridas. "
+                    "Bois e mãos: ganhos/jogados. Lambretas e reversas: aplicadas/sofridas. "
                 }
                 "Nas duplas, a vitória da dupla conta para os dois parceiros."
             }
@@ -851,8 +851,10 @@ fn stats_table(view: &RoomView, mut stats: Vec<PlayerStats>) -> Element {
     }
     stats.sort_by(by_wins);
     rsx! {
+        // No celular cada linha vira um cartão (CSS): o `data-label` dá o nome
+        // de cada número, já que o cabeçalho some.
         div { class: "table-wrap",
-            table { class: "stats-table",
+            table { class: "stats-table cards-on-phone",
                 thead {
                     tr {
                         th { "Jogador" }
@@ -868,12 +870,16 @@ fn stats_table(view: &RoomView, mut stats: Vec<PlayerStats>) -> Element {
                     for s in stats.iter() {
                         tr { key: "{s.player_id}",
                             td { "{view.player_name(s.player_id)}" }
-                            td { "{s.bois_ganhos}/{s.bois_jogados}" }
-                            td { "{s.maos_ganhas}/{s.maos_jogadas}" }
-                            td { "{s.batidas}" }
-                            td { "{s.fechados}" }
-                            td { "{s.lambretas_aplicadas}/{s.lambretas_sofridas}" }
-                            td { "{s.reversas_aplicadas}/{s.reversas_sofridas}" }
+                            td { "data-label": "Bois", "{s.bois_ganhos}/{s.bois_jogados}" }
+                            td { "data-label": "Mãos", "{s.maos_ganhas}/{s.maos_jogadas}" }
+                            td { "data-label": "Batidas", "{s.batidas}" }
+                            td { "data-label": "Fechados", "{s.fechados}" }
+                            td { "data-label": "Lambretas",
+                                "{s.lambretas_aplicadas}/{s.lambretas_sofridas}"
+                            }
+                            td { "data-label": "Reversas",
+                                "{s.reversas_aplicadas}/{s.reversas_sofridas}"
+                            }
                         }
                     }
                 }

@@ -347,6 +347,33 @@ button.swatch:disabled { opacity: 0.2; cursor: default; }
 .stats-table th:first-child, .stats-table td:first-child { text-align: left; }
 .stats-table th { color: var(--muted); font-weight: 600; }
 
+/* No celular, a tabela completa (7 colunas) vira um cartão por jogador,
+   em vez de rolar para o lado. */
+@media (max-width: 560px) {
+  .cards-on-phone thead { display: none; }
+  .cards-on-phone, .cards-on-phone tbody { display: block; }
+  .cards-on-phone tbody { display: flex; flex-direction: column; gap: var(--sp-2); }
+  .cards-on-phone tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-1) var(--sp-4);
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .cards-on-phone td {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    padding: 0;
+    border: none;
+    font-size: 0.95rem;
+  }
+  .cards-on-phone td::before { content: attr(data-label); color: var(--muted); }
+  .cards-on-phone td:first-child { grid-column: 1 / -1; font-weight: 700; font-size: 1rem; }
+  .cards-on-phone td:first-child::before { content: none; }
+}
+
 /* Histórico: sanfona por dia, cartões em grade, gaveta de baixo para cima. */
 .days { display: flex; flex-direction: column; }
 .day { border-top: 1px solid var(--line); }
