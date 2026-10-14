@@ -387,8 +387,13 @@ try:
     click(btn("Sair"))
     wait_text("Esqueci a senha")
     before = last_code(email)
-    # O servidor só manda um código por minuto para a mesma conta.
-    time.sleep(61)
+    # O servidor só manda um código por minuto para a mesma conta. Espera
+    # consultando a página: parado por um minuto, o Safari automatizado às
+    # vezes deixa de responder ao comando seguinte.
+    end = time.time() + 61
+    while time.time() < end:
+        body_text()
+        time.sleep(5)
     click("//a[normalize-space()='Esqueci a senha']")
     type_in("//label[contains(.,'Usuário ou e-mail')]/input", user)
     click(btn("Mandar código"))
