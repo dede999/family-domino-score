@@ -3,10 +3,11 @@
 mod accounts;
 pub use accounts::*;
 
+use crate::model::BoiView;
 use crate::model::{Mode, Outcome};
 use crate::period::Period;
 use crate::rules::PlayerStats;
-use crate::views::{HistoryPage, PeriodReport, PlayerInput, RoomSummary, RoomView};
+use crate::views::{DaysPage, PeriodReport, PlayerInput, RoomSummary, RoomView};
 use dioxus::fullstack::ServerEvents;
 use dioxus::prelude::*;
 
@@ -186,13 +187,22 @@ pub async fn get_room(code: String) -> Result<RoomView, ServerFnError> {
     load_room_view(&conn, &room, user.as_ref()).await
 }
 
-/// Próxima página do histórico: bois terminados mais antigos que `before`.
+/// Próxima página do histórico: os dias com boi terminado antes de `before`.
 #[post("/api/salas/{code}/historico")]
-pub async fn room_history(code: String, before: i64) -> Result<HistoryPage, ServerFnError> {
+pub async fn room_history(code: String, before: Period) -> Result<DaysPage, ServerFnError> {
     let conn = conn().await?;
     let room = room_by_code(&conn, &code).await?;
     let bois = room_bois(&conn, room.id).await?;
-    Ok(crate::views::history_page(room.mode, &bois, Some(before)))
+    Ok(crate::views::days_page(room.mode, &bois, Some(before)))
+}
+
+/// Bois terminados de um dia, do mais recente para o mais antigo.
+#[post("/api/salas/{code}/dia")]
+pub async fn room_day(code: String, day: Period) -> Result<Vec<BoiView>, ServerFnError> {
+    let conn = conn().await?;
+    let room = room_by_code(&conn, &code).await?;
+    let bois = room_bois(&conn, room.id).await?;
+    Ok(crate::views::day_bois(room.mode, &bois, day))
 }
 
 /// Estatísticas da sala em cada período pedido (no máximo dois, para

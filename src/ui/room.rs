@@ -150,7 +150,7 @@ fn RoomBody(view: RoomView, on_change: EventHandler<()>) -> Element {
         }
 
         Stats { view: view.clone() }
-        History { view: view.clone() }
+        super::history::History { view: view.clone() }
     }
 }
 
@@ -247,29 +247,7 @@ fn Scoreboard(view: RoomView, boi: BoiView, on_change: EventHandler<()>) -> Elem
     rsx! {
         section { class: "card board",
             h2 { "Boi nº {boi.number}" }
-            div { class: if sides > 2 { "crosses many" } else { "crosses" },
-                for side in 0..sides {
-                    div { key: "{side}", class: "side",
-                        Cross {
-                            wins: boi
-                                .hands
-                                .iter()
-                                .filter(|h| h.winner_side == Some(side))
-                                .map(|h| h.outcome)
-                                .collect::<Vec<_>>(),
-                            color: colors[side],
-                            end: match (state.winner, state.results[side]) {
-                                (None, _) => CrossEnd::Playing,
-                                (Some(w), _) if w == side => CrossEnd::Winner,
-                                (_, Some(SideResult::Lambreta)) => CrossEnd::Lambreta,
-                                _ => CrossEnd::Loser,
-                            },
-                        }
-                        div { class: "side-name", "{view.side_name(&boi, side)}" }
-                        div { class: "score", "{state.scores[side]}" }
-                    }
-                }
-            }
+            Crosses { view: view.clone(), boi: boi.clone() }
 
             if !boi.hands.is_empty() {
                 HandStrip { view: view.clone(), boi: boi.clone(), colors: colors.clone() }
@@ -364,8 +342,41 @@ fn Scoreboard(view: RoomView, boi: BoiView, on_change: EventHandler<()>) -> Elem
     }
 }
 
+/// Cruzes do boi, com o nome e o placar de cada lado.
 #[component]
-fn FinalResult(view: RoomView, boi: BoiView) -> Element {
+pub(super) fn Crosses(view: RoomView, boi: BoiView) -> Element {
+    let state = view.state(&boi);
+    let sides = rules::side_count(view.mode, boi.seating.len());
+    let colors = view.side_colors(&boi);
+    rsx! {
+        div { class: if sides > 2 { "crosses many" } else { "crosses" },
+            for side in 0..sides {
+                div { key: "{side}", class: "side",
+                    Cross {
+                        wins: boi
+                            .hands
+                            .iter()
+                            .filter(|h| h.winner_side == Some(side))
+                            .map(|h| h.outcome)
+                            .collect::<Vec<_>>(),
+                        color: colors[side],
+                        end: match (state.winner, state.results[side]) {
+                            (None, _) => CrossEnd::Playing,
+                            (Some(w), _) if w == side => CrossEnd::Winner,
+                            (_, Some(SideResult::Lambreta)) => CrossEnd::Lambreta,
+                            _ => CrossEnd::Loser,
+                        },
+                    }
+                    div { class: "side-name", "{view.side_name(&boi, side)}" }
+                    div { class: "score", "{state.scores[side]}" }
+                }
+            }
+        }
+    }
+}
+
+#[component]
+pub(super) fn FinalResult(view: RoomView, boi: BoiView) -> Element {
     let state = view.state(&boi);
     let Some(winner) = state.winner else {
         return rsx! {};
@@ -432,7 +443,7 @@ fn comeback_lines(view: &RoomView, boi: &BoiView, scores: &[u32]) -> Element {
 /// duplas vira um retângulo com as iniciais da dupla que venceu. A última
 /// fica destacada. Tocar num quadrado mostra o que aconteceu naquela mão.
 #[component]
-fn HandStrip(view: RoomView, boi: BoiView, colors: Vec<u8>) -> Element {
+pub(super) fn HandStrip(view: RoomView, boi: BoiView, colors: Vec<u8>) -> Element {
     let mut selected = use_signal(|| None::<usize>);
     let last = boi.hands.len() - 1;
     // Se a mão escolhida foi desfeita, esquece a escolha.
@@ -899,109 +910,4 @@ fn compare_table(
             }
         }
     }
-}
-
-/// Bois já terminados, agrupados por dia de jogo. A sala traz os 10 mais
-/// recentes; "Ver mais" busca os 10 anteriores de cada vez.
-#[component]
-fn History(view: RoomView) -> Element {
-    // Páginas mais antigas já buscadas. Ficam guardadas quando a sala
-    // recarrega, porque bois antigos não mudam.
-    let mut older = use_signal(Vec::<BoiView>::new);
-    let mut older_more = use_signal(|| None::<bool>);
-    let mut loading = use_signal(|| false);
-    let mut error = use_signal(|| None::<String>);
-
-    // Se um boi terminou depois da busca, a primeira página andou e pode
-    // repetir bois das páginas antigas; fica só o que vem depois dela.
-    let first = &view.history.bois;
-    let oldest_first = first.last().map(|b| b.id);
-    let older_list = older.read();
-    let finished: Vec<&BoiView> = first
-        .iter()
-        .chain(
-            older_list
-                .iter()
-                .filter(|b| oldest_first.is_none_or(|id| b.id < id)),
-        )
-        .collect();
-    let more = older_more().unwrap_or(view.history.more);
-    if finished.is_empty() {
-        return rsx! {};
-    }
-    let before = finished.last().map(|b| b.id).unwrap_or_default();
-
-    let mut days: Vec<(String, Vec<&BoiView>)> = Vec::new();
-    for boi in finished {
-        let day = format_date(boi.started_at);
-        match days.last_mut() {
-            Some((d, list)) if *d == day => list.push(boi),
-            _ => days.push((day, vec![boi])),
-        }
-    }
-    let code = view.code.clone();
-    rsx! {
-        section { class: "card",
-            h2 { "Histórico" }
-            for (day, bois) in days.iter() {
-                div { key: "{day}", class: "day",
-                    h3 { "{day}" }
-                    ul {
-                        for boi in bois.iter() {
-                            li { key: "{boi.id}", {history_line(&view, boi)} }
-                        }
-                    }
-                }
-            }
-            if more {
-                button {
-                    r#type: "button",
-                    disabled: loading(),
-                    onclick: move |_| {
-                        let code = code.clone();
-                        async move {
-                            loading.set(true);
-                            match api::room_history(code, before).await {
-                                Ok(page) => {
-                                    older.write().extend(page.bois);
-                                    older_more.set(Some(page.more));
-                                    error.set(None);
-                                }
-                                Err(e) => error.set(Some(error_message(&e))),
-                            }
-                            loading.set(false);
-                        }
-                    },
-                    if loading() { "Carregando…" } else { "Ver mais" }
-                }
-            }
-            if let Some(e) = error() {
-                p { class: "error", "{e}" }
-            }
-        }
-    }
-}
-
-fn history_line(view: &RoomView, boi: &BoiView) -> String {
-    let state = view.state(boi);
-    let Some(winner) = state.winner else {
-        return String::new();
-    };
-    let others: Vec<String> = (0..state.scores.len())
-        .filter(|&s| s != winner)
-        .map(|s| {
-            let tag = match state.results[s] {
-                Some(SideResult::Lambreta) => " (lambreta)",
-                Some(SideResult::LambretaReversa) => " (lambreta reversa)",
-                _ => "",
-            };
-            format!("{} {}{tag}", view.side_name(boi, s), state.scores[s])
-        })
-        .collect();
-    format!(
-        "Boi {}: {} 4 × {}",
-        boi.number,
-        view.side_name(boi, winner),
-        others.join(", ")
-    )
 }

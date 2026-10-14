@@ -1,5 +1,6 @@
 mod account;
 mod colors;
+mod history;
 mod home;
 mod new_room;
 mod room;

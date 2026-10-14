@@ -7,7 +7,7 @@ use crate::model::{
 };
 use crate::palette;
 use crate::period::Period;
-use crate::views::{RoomView, UserInfo, history_page};
+use crate::views::{RoomView, UserInfo, days_page};
 use dioxus::fullstack::{HeaderMap, HttpError, ServerFnError, StatusCode};
 use libsql::{Connection, Database, params};
 use std::collections::HashMap;
@@ -432,9 +432,10 @@ pub async fn load_room_view(
         can_edit,
         players: players.into_iter().map(|p| p.player).collect(),
         current: bois.last().cloned(),
-        history: history_page(room.mode, &bois, None),
+        history: days_page(room.mode, &bois, None),
         stats: bois_stats(room.mode, bois.iter()),
         played: played_days(&bois),
+        today: Period::day_of(crate::accounts::now()),
         comebacks: room_comebacks(room.mode, &bois),
         pairs: room_pairs(conn, room.id).await?,
     })
