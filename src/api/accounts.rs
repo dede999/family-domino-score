@@ -134,11 +134,20 @@ pub async fn request_email_code(email: String) -> Result<(), ServerFnError> {
     }
     let code = new_code();
     store_code(&conn, user.id, "email", &code, Some(&email), CODE_TTL).await?;
-    send_email(
+    if let Err(e) = send_email(
         &email,
         "Confirme seu e-mail no Placar de Dominó",
         &format!("Seu código é {code}. Vale por 15 minutos."),
-    );
+    )
+    .await
+    {
+        eprintln!("falha ao mandar e-mail de confirmação: {e}");
+        forget_code(&conn, user.id, "email").await?;
+        return Err(user_err(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "Não deu para mandar o e-mail agora. Confira o endereço ou tente de novo daqui a pouco.",
+        ));
+    }
     Ok(())
 }
 
@@ -175,11 +184,18 @@ pub async fn request_login_code(who: String) -> Result<(), ServerFnError> {
     {
         let code = new_code();
         store_code(&conn, user.id, "login", &code, None, CODE_TTL).await?;
-        send_email(
+        // Falha no envio não muda a resposta: ela é a mesma exista ou não a
+        // conta. Só apaga o código, para dar para pedir de novo na hora.
+        if let Err(e) = send_email(
             &email,
             "Seu código para entrar no Placar de Dominó",
             &format!("Seu código é {code}. Vale por 15 minutos. Se não foi você, ignore."),
-        );
+        )
+        .await
+        {
+            eprintln!("falha ao mandar código de entrada: {e}");
+            forget_code(&conn, user.id, "login").await?;
+        }
     }
     Ok(())
 }

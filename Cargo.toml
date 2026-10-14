@@ -17,8 +17,10 @@ libsql = { version = "0.9.30", optional = true }
 tokio = { version = "1", features = ["full"], optional = true }
 argon2 = { version = "0.5.3", optional = true }
 rand = { version = "0.8", optional = true }
+# E-mail por SMTP, com o mesmo TLS (rustls + ring) que o resto já usa.
+lettre = { version = "0.11", optional = true, default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls", "ring", "webpki-roots"] }
 
 [features]
 default = ["web"]
 web = ["dioxus/web", "dep:gloo-timers"]
-server = ["dioxus/server", "dep:libsql", "dep:tokio", "dep:argon2", "dep:rand"]
+server = ["dioxus/server", "dep:libsql", "dep:tokio", "dep:argon2", "dep:rand", "dep:lettre"]

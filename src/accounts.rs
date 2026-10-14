@@ -226,6 +226,22 @@ pub async fn store_code(
     Ok(())
 }
 
+/// Apaga o código de um tipo, para quem não recebeu o e-mail poder pedir
+/// outro na hora (sem esperar o minuto de `recently_sent`).
+pub async fn forget_code(
+    conn: &Connection,
+    user_id: i64,
+    purpose: &str,
+) -> Result<(), ServerFnError> {
+    conn.execute(
+        "DELETE FROM codes WHERE user_id = ?1 AND purpose = ?2",
+        params![user_id, purpose],
+    )
+    .await
+    .map_err(db_err)?;
+    Ok(())
+}
+
 /// Pediu um código há pouco? Evita encher a caixa de alguém de e-mails.
 pub async fn recently_sent(
     conn: &Connection,
@@ -346,12 +362,50 @@ pub fn is_admin(user: &UserInfo) -> bool {
 
 // ---- E-mail ----
 
-/// Manda um e-mail. Por enquanto só escreve no log do servidor (e, com
-/// `PLACAR_MAILBOX`, num arquivo, que o teste da interface lê). O envio de
-/// verdade entra com o deploy, quando houver domínio.
-pub fn send_email(to: &str, subject: &str, body: &str) {
+/// Manda um e-mail. Com `PLACAR_SMTP_USER` e `PLACAR_SMTP_PASSWORD` (a conta
+/// do Gmail do app e uma senha de app dela), envia pelo SMTP do Gmail, ou do
+/// servidor em `PLACAR_SMTP_HOST`. Sem elas (desenvolvimento), só escreve no
+/// log e, com `PLACAR_MAILBOX`, num arquivo que o teste da interface lê.
+///
+/// No envio de verdade, o log não leva o corpo: ele tem o código.
+pub async fn send_email(to: &str, subject: &str, body: &str) -> Result<(), String> {
+    let (Ok(user), Ok(password)) = (
+        std::env::var("PLACAR_SMTP_USER"),
+        std::env::var("PLACAR_SMTP_PASSWORD"),
+    ) else {
+        write_mailbox(to, subject, body);
+        return Ok(());
+    };
+    use lettre::message::header::ContentType;
+    use lettre::transport::smtp::authentication::Credentials;
+    use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
+
+    let host = std::env::var("PLACAR_SMTP_HOST").unwrap_or_else(|_| "smtp.gmail.com".into());
+    let from = format!("Placar de Dominó <{user}>")
+        .parse()
+        .map_err(|e| format!("remetente inválido: {e}"))?;
+    let to_addr = to
+        .parse()
+        .map_err(|e| format!("destinatário inválido: {e}"))?;
+    let message = Message::builder()
+        .from(from)
+        .to(to_addr)
+        .subject(subject)
+        .header(ContentType::TEXT_PLAIN)
+        .body(body.to_string())
+        .map_err(|e| e.to_string())?;
+    let mailer = AsyncSmtpTransport::<Tokio1Executor>::relay(&host)
+        .map_err(|e| e.to_string())?
+        .credentials(Credentials::new(user, password))
+        .build();
+    mailer.send(message).await.map_err(|e| e.to_string())?;
+    eprintln!("e-mail enviado para {to}: {subject}");
+    Ok(())
+}
+
+fn write_mailbox(to: &str, subject: &str, body: &str) {
     let line = format!("para {to} | {subject} | {body}");
-    eprintln!("e-mail {line}");
+    eprintln!("e-mail (não enviado, sem SMTP) {line}");
     if let Ok(path) = std::env::var("PLACAR_MAILBOX") {
         use std::io::Write;
         if let Ok(mut f) = std::fs::OpenOptions::new()
