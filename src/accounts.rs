@@ -120,8 +120,15 @@ pub async fn create_session(conn: &Connection, user_id: i64) -> Result<String, S
     Ok(token)
 }
 
+/// Cookie da sessão. Com `PLACAR_HTTPS` definida (produção), só viaja por
+/// HTTPS; em casa, por HTTP, o navegador não guardaria um cookie `Secure`.
 pub fn session_cookie(token: &str, max_age: u32) -> String {
-    format!("{SESSION_COOKIE}={token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={max_age}")
+    let secure = if std::env::var_os("PLACAR_HTTPS").is_some() {
+        "; Secure"
+    } else {
+        ""
+    };
+    format!("{SESSION_COOKIE}={token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={max_age}{secure}")
 }
 
 fn session_token(headers: &HeaderMap) -> Option<String> {
