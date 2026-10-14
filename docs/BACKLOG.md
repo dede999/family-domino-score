@@ -31,7 +31,7 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 11. [x] Recuperar senha (ver Infra), junto com separar as contas do placar.
     Falta só o envio de e-mail de verdade, que depende do deploy.
 12. [x] Separar `src/model.rs` (ver Arquitetura).
-13. Histórico em cartões (próximo).
+13. [x] Histórico em cartões.
 
 ## Visual
 
@@ -111,7 +111,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 
 ## Histórico em cartões (pedido em 2026-10-13)
 
-- [ ] **Histórico como sanfona por dia, com cartões e gaveta de detalhe.**
+- [x] **Histórico como sanfona por dia, com cartões e gaveta de detalhe.**
+  Feito em 2026-10-14: `src/ui/history.rs`, `days_page`/`day_bois` em
+  `src/views.rs`, rotas `room_history` (dias) e `room_day`.
   - Um item da sanfona por dia. Fechado, mostra o resumo do dia ("12/10 ·
     8 bois · André & Sobrinho 5 × 3 Pai & Tio"). Abertos: hoje e/ou o
     último dia jogado.
