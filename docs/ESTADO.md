@@ -42,7 +42,7 @@ Nada. O app está no ar (ver `docs/DEPLOY.md`). Próximo item: ver
 
 `python3 tools/ui_test.py`, com o servidor rodando. Controla o Safari via
 WebDriver, sem dependências, e cobre cadastro, sala, boi completo, desfazer,
-tempo real, estatísticas, histórico paginado e visitante. Passou inteiro
+tempo real, estatísticas, histórico paginado, visitante, ajuda e tema. Passou inteiro
 em 2026-10-13. Precisa
 de "Permitir Automação Remota" ligado no menu Desenvolvedor do Safari.
 

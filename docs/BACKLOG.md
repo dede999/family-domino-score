@@ -34,7 +34,7 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 13. [x] Histórico em cartões.
 14. [x] Deploy no Cloud Run + Turso (ver `DEPLOY.md`). No ar em 2026-10-14.
     `PLACAR_ADMIN=andre_luiz` configurado.
-15. [ ] Guia de uso: "?" por tela e troca de tema no topo (ver a seção própria).
+15. [x] Guia de uso: "?" por tela e troca de tema no topo (ver a seção própria).
 16. [x] CD pelo GitHub Actions (ver Infra). Pedido em 2026-10-14, passou
     na frente do guia.
 
@@ -210,7 +210,12 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
       0 a 3 ou 1 a 3 e empatar em 3 a 3." Conta quem estava atrás por 2 ou
       3 e chegou ao empate, mesmo que tenha perdido a mão 7.
 
-## Guia de uso (pedido em 2026-10-14)
+## Guia de uso (pedido em 2026-10-14, feito no mesmo dia)
+
+Feito: `src/ui/help.rs` (textos por tela e convite), `src/ui/theme.rs`
+(tema), `src/ui/top_bar.rs` (barra do topo de todas as telas). Na tela
+inicial, o "Olá, nome · Minha conta · Sair" desceu para baixo do título,
+porque com o tema e o "?" não cabia ao lado no celular.
 
 Um passo a passo de como usar o app, **opcional**: não aparece à força no
 primeiro uso e pode ser aberto de novo quando quiser.
