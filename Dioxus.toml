@@ -3,3 +3,9 @@ name = "placar"
 
 [web.app]
 title = "Placar de Dominó"
+
+# Em release, o dx bundle grava um .br (Brotli) ao lado de cada arquivo da
+# interface, e o servidor entrega o .br a quem aceita: o wasm cai de ~3 MB
+# para uma fração disso, o que pesa no 4G.
+[web]
+pre_compress = true
