@@ -32,6 +32,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     Falta só o envio de e-mail de verdade, que depende do deploy.
 12. [x] Separar `src/model.rs` (ver Arquitetura).
 13. [x] Histórico em cartões.
+14. [ ] Deploy no Cloud Run + Turso (ver `DEPLOY.md`). Feito: Dockerfile,
+    cookie `Secure`, tempo real que fecha a conexão com a página escondida.
+    Falta: contas do André no Google Cloud e no Turso, e o primeiro deploy.
 
 ## Visual
 
@@ -213,7 +216,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   `assets/main.css`). Cliques antes da
   hidratação se perdem, num celular lento. CSS: enquanto `<html>` não tiver
   `data-pronto`, botões, links de ação e campos ficam apagados e sem clique.
-- [ ] Deploy: Turso e hospedagem.
+- [ ] Deploy: Turso e hospedagem. Escolhido em 2026-10-14: Cloud Run em São
+  Paulo + Turso em São Paulo. Motivos e passos em `docs/DEPLOY.md`.
 - [x] **CI no GitHub Actions** (pedido em 2026-10-13). Feito:
   `.github/workflows/ci.yml`. A cada push na `main` e em PR:
   - `cargo fmt --check`.
