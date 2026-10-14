@@ -1,4 +1,4 @@
-use super::{TopBar, current_user, use_me_resource};
+use super::{Help, HelpInvite, TopBar, current_user, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
 use dioxus::prelude::*;
@@ -11,16 +11,19 @@ pub fn Home() -> Element {
 
     rsx! {
         main { class: "page",
-            TopBar {
+            TopBar { help: Help::Home,
                 h1 { "Placar de Dominó" }
-                if let Some(user) = &user {
-                    div { class: "who",
-                        span { "Olá, {user.display_name}" }
-                        Link { to: Route::MyAccount {}, "Minha conta" }
-                        LogoutButton {}
-                    }
+            }
+            // Fora da barra do topo: com o tema e o "?" ao lado, não sobra
+            // largura no celular para o nome e os links.
+            if let Some(user) = &user {
+                div { class: "who",
+                    span { "Olá, {user.display_name}" }
+                    Link { to: Route::MyAccount {}, "Minha conta" }
+                    LogoutButton {}
                 }
             }
+            HelpInvite {}
             JoinRoom {}
             if loading {
                 p { class: "muted", "Carregando…" }

@@ -1,6 +1,7 @@
 mod account;
 mod colors;
 mod drawer;
+mod help;
 mod history;
 mod home;
 mod new_room;
@@ -18,6 +19,7 @@ use crate::model::Outcome;
 use crate::palette;
 use crate::views::UserInfo;
 use dioxus::prelude::*;
+pub use help::{Help, HelpInvite};
 pub use top_bar::TopBar;
 
 pub type MeResource = Resource<Result<Option<UserInfo>, ServerFnError>>;

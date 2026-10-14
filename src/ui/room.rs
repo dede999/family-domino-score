@@ -1,6 +1,6 @@
 use super::colors::{PairColorsCard, Swatch};
 use super::new_room::{PlayerDraft, PlayersEditor, seat_label};
-use super::{Cross, CrossEnd, TopBar, current_user, page_hidden, sleep_ms, use_me_resource};
+use super::{Cross, CrossEnd, Help, TopBar, current_user, page_hidden, sleep_ms, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
 use crate::model::{BoiView, Mode, Outcome};
@@ -71,7 +71,7 @@ pub fn Room(code: String) -> Element {
 
     rsx! {
         main { class: "page",
-            TopBar {
+            TopBar { help: Help::Room,
                 Link { to: Route::Home {}, "← Início" }
             }
             {body}
