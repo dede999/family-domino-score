@@ -436,7 +436,17 @@ pub async fn set_pair_colors(
     Ok(())
 }
 
-/// Avisa quem está assistindo a sala sempre que o placar muda.
+/// Evento de `room_events`: o placar mudou.
+pub const EVENT_CHANGED: u8 = 1;
+/// Evento de `room_events`: só um sinal de vida, nada mudou.
+#[cfg_attr(not(feature = "server"), allow(dead_code))]
+pub const EVENT_ALIVE: u8 = 0;
+/// A cada quanto tempo `room_events` manda um sinal de vida.
+pub const ALIVE_EVERY_SECS: u32 = 25;
+
+/// Avisa quem está assistindo a sala sempre que o placar muda. Sem mudança,
+/// manda um sinal de vida de tempos em tempos: assim o servidor percebe quem
+/// desconectou sem avisar (celular que perdeu o sinal) e solta a conexão.
 #[get("/api/salas/{code}/eventos")]
 pub async fn room_events(code: String) -> Result<ServerEvents<u8>, ServerFnError> {
     let conn = conn().await?;
@@ -444,9 +454,17 @@ pub async fn room_events(code: String) -> Result<ServerEvents<u8>, ServerFnError
     let mut rx = subscribe(room.id);
     Ok(ServerEvents::new(move |mut tx| async move {
         use tokio::sync::broadcast::error::RecvError;
-        // Para quando o canal fecha ou quem assistia desconecta.
-        while let Ok(()) | Err(RecvError::Lagged(_)) = rx.recv().await {
-            if tx.send(1).await.is_err() {
+        let alive = std::time::Duration::from_secs(ALIVE_EVERY_SECS.into());
+        loop {
+            let event = tokio::select! {
+                r = rx.recv() => match r {
+                    Ok(()) | Err(RecvError::Lagged(_)) => EVENT_CHANGED,
+                    Err(RecvError::Closed) => break,
+                },
+                _ = tokio::time::sleep(alive) => EVENT_ALIVE,
+            };
+            // Falha quando quem assistia desconectou.
+            if tx.send(event).await.is_err() {
                 break;
             }
         }

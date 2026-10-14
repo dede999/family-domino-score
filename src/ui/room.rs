@@ -1,6 +1,6 @@
 use super::colors::{PairColorsCard, Swatch};
 use super::new_room::{PlayerDraft, PlayersEditor, seat_label};
-use super::{Cross, CrossEnd, current_user, sleep_ms, use_me_resource};
+use super::{Cross, CrossEnd, current_user, page_hidden, sleep_ms, use_me_resource};
 use crate::Route;
 use crate::api::{self, error_message};
 use crate::model::{BoiView, Mode, Outcome};
@@ -9,6 +9,8 @@ use crate::period::{Period, format_date};
 use crate::rules::{self, Firsts, Moment, PlayerStats, Record, SideResult};
 use crate::views::{PeriodReport, RoomView};
 use dioxus::prelude::*;
+use futures::future::{Either, select};
+use std::pin::pin;
 
 #[component]
 pub fn Room(code: String) -> Element {
@@ -16,17 +18,43 @@ pub fn Room(code: String) -> Element {
     let mut room = use_resource(move || async move { api::get_room(code()).await });
 
     // Tempo real: o servidor avisa quando o placar muda, e a sala recarrega.
+    // Com a página escondida a conexão fica fechada: no servidor, cada
+    // conexão aberta conta como tempo de uso.
     use_effect(move || {
         spawn(async move {
+            let mut first = true;
             loop {
-                if let Ok(mut events) = api::room_events(code()).await {
-                    while let Some(Ok(_)) = events.recv().await {
-                        room.restart();
+                page_hidden(false).await;
+                // Pode ter perdido mudanças enquanto estava desconectado.
+                if !first {
+                    room.restart();
+                }
+                first = false;
+                let Ok(mut events) = api::room_events(code()).await else {
+                    sleep_ms(3000).await;
+                    continue;
+                };
+                let mut hidden = pin!(page_hidden(true));
+                loop {
+                    // Sem nem o sinal de vida por esse tempo, a conexão morreu
+                    // sem avisar (celular que trocou de rede).
+                    let recv = pin!(events.recv());
+                    let silence = pin!(sleep_ms(api::ALIVE_EVERY_SECS * 2 * 1000));
+                    match select(select(recv, silence), hidden.as_mut()).await {
+                        Either::Left((Either::Left((Some(Ok(e)), _)), _)) => {
+                            if e == api::EVENT_CHANGED {
+                                room.restart();
+                            }
+                        }
+                        // Conexão caiu ou ficou muda: espera um pouco e reconecta.
+                        Either::Left(_) => {
+                            sleep_ms(3000).await;
+                            break;
+                        }
+                        // Página escondida: fecha a conexão até ela voltar.
+                        Either::Right(_) => break,
                     }
                 }
-                // Conexão caiu: espera um pouco, recarrega e reconecta.
-                sleep_ms(3000).await;
-                room.restart();
             }
         });
     });

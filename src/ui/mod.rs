@@ -37,6 +37,30 @@ pub async fn sleep_ms(ms: u32) {
     let _ = ms;
 }
 
+/// Espera a página ficar escondida (`hidden = true`: outra aba, app em
+/// segundo plano, tela apagada) ou visível de novo. Volta na hora se a
+/// página já estiver assim.
+pub async fn page_hidden(hidden: bool) {
+    let mut wait = document::eval(&format!(
+        r#"
+        const want = {hidden};
+        if (document.hidden !== want) {{
+            await new Promise((done) => {{
+                const check = () => {{
+                    if (document.hidden === want) {{
+                        document.removeEventListener("visibilitychange", check);
+                        done();
+                    }}
+                }};
+                document.addEventListener("visibilitychange", check);
+            }});
+        }}
+        dioxus.send(true);
+        "#
+    ));
+    let _ = wait.recv::<bool>().await;
+}
+
 /// Como a cruz aparece no fim do boi.
 #[derive(Clone, Copy, PartialEq)]
 pub enum CrossEnd {
