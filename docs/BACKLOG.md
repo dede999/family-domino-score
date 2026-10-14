@@ -39,7 +39,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     na frente do guia.
 17. [x] Comprimir a interface (ver Infra). Fila pedida em 2026-10-14:
 18. [x] README.md.
-19. [ ] Tabela de estatísticas sem rolar para o lado no celular.
+19. [x] Tabela de estatísticas sem rolar para o lado no celular: até 560 px,
+    um cartão por jogador.
 20. [ ] Envio de e-mail de verdade (ver Infra → Recuperar senha).
 21. [ ] Play Store (ver "Futuro: distribuição").
 
