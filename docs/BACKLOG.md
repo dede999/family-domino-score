@@ -34,7 +34,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 13. [x] Histórico em cartões.
 14. [x] Deploy no Cloud Run + Turso (ver `DEPLOY.md`). No ar em 2026-10-14.
     `PLACAR_ADMIN=andre_luiz` configurado.
-15. [ ] Guia de uso (walkthrough), ver a seção própria.
+15. [ ] Guia de uso: "?" por tela e troca de tema no topo (ver a seção própria).
+16. [ ] CD pelo GitHub Actions (ver Infra). Pedido em 2026-10-14, passou
+    na frente do guia.
 
 ## Visual
 
@@ -213,18 +215,21 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 Um passo a passo de como usar o app, **opcional**: não aparece à força no
 primeiro uso e pode ser aberto de novo quando quiser.
 
-- Na primeira visita, só um convite discreto ("Primeira vez? Veja como
-  funciona"), que some ao fechar. Nada de tela cheia bloqueando o uso.
-- Link fixo "Como usar" (no rodapé ou no topo) para reabrir quando quiser.
-- Poucos passos, curtos, com o vocabulário do jogo: abrir ou criar a sala,
-  marcar a mão (batida, fechado, empate), ler a cruz e o placar, desfazer,
-  histórico e estatísticas. Pensar no senhor de 82 anos: letra grande, um
-  passo por tela, botão "Próximo" grande.
-- Ideia a decidir: guia por tela (um "?" na sala explica só a sala) em vez
-  de um tour único. Costuma ser mais útil para quem volta com uma dúvida
-  específica.
-- "Já vi o convite" fica no `localStorage` do aparelho (conveniência; se
-  sumir, o convite só aparece de novo).
+- **Decidido em 2026-10-14: ajuda por tela, não um tour único.** Um botão
+  "?" no topo, canto direito, com bom contraste nos dois temas, explica só
+  a tela atual. Quem volta com uma dúvida ("como desfaço?") acha a resposta
+  sem refazer o tour inteiro.
+- **Ao lado do "?", a troca de tema**: claro, escuro ou automático (hoje o
+  app só segue o sistema, por `prefers-color-scheme` em `assets/main.css`).
+  A escolha fica no `localStorage` do aparelho.
+- Na primeira visita, no máximo um convite discreto apontando para o "?",
+  que some ao fechar. Nada de tela cheia bloqueando o uso.
+- Textos curtos, com o vocabulário do jogo: abrir ou criar a sala, marcar a
+  mão (batida, fechado, empate), ler a cruz e o placar, desfazer, histórico
+  e estatísticas. Pensar no senhor de 82 anos: letra grande, botão de
+  fechar grande.
+- "Já vi o convite" e o tema escolhido ficam no `localStorage` (conveniência;
+  se sumir, volta o padrão).
 
 ## Infra
 
