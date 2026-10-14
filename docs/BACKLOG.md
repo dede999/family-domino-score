@@ -33,7 +33,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 12. [x] Separar `src/model.rs` (ver Arquitetura).
 13. [x] Histórico em cartões.
 14. [x] Deploy no Cloud Run + Turso (ver `DEPLOY.md`). No ar em 2026-10-14.
-    Falta só o André criar a conta no app para virar `PLACAR_ADMIN`.
+    `PLACAR_ADMIN=andre_luiz` configurado.
+15. [ ] Guia de uso (walkthrough), ver a seção própria.
 
 ## Visual
 
@@ -206,6 +207,24 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     - **Recuperações até o 3 a 3:** "Já aconteceu 4 vezes de alguém estar
       0 a 3 ou 1 a 3 e empatar em 3 a 3." Conta quem estava atrás por 2 ou
       3 e chegou ao empate, mesmo que tenha perdido a mão 7.
+
+## Guia de uso (pedido em 2026-10-14)
+
+Um passo a passo de como usar o app, **opcional**: não aparece à força no
+primeiro uso e pode ser aberto de novo quando quiser.
+
+- Na primeira visita, só um convite discreto ("Primeira vez? Veja como
+  funciona"), que some ao fechar. Nada de tela cheia bloqueando o uso.
+- Link fixo "Como usar" (no rodapé ou no topo) para reabrir quando quiser.
+- Poucos passos, curtos, com o vocabulário do jogo: abrir ou criar a sala,
+  marcar a mão (batida, fechado, empate), ler a cruz e o placar, desfazer,
+  histórico e estatísticas. Pensar no senhor de 82 anos: letra grande, um
+  passo por tela, botão "Próximo" grande.
+- Ideia a decidir: guia por tela (um "?" na sala explica só a sala) em vez
+  de um tour único. Costuma ser mais útil para quem volta com uma dúvida
+  específica.
+- "Já vi o convite" fica no `localStorage` do aparelho (conveniência; se
+  sumir, o convite só aparece de novo).
 
 ## Infra
 
