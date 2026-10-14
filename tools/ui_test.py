@@ -355,6 +355,24 @@ try:
     shot("5-visitante")
     ok("visitante vê o placar sem botões")
 
+    # 8b. Ajuda da tela e tema, no topo
+    click(btn("?"))
+    wait_text("Como usar a sala")
+    assert "Desfazer última mão" in body_text(), "ajuda da sala sem o desfazer"
+    shot("5b-ajuda")
+    click(btn("Fechar"))
+    end = time.time() + 5
+    while "Como usar a sala" in body_text() and time.time() < end:
+        time.sleep(0.2)
+    assert "Como usar a sala" not in body_text(), "ajuda não fechou"
+    theme = lambda: s("POST", "/execute/sync", {"script": "return document.documentElement.dataset.theme", "args": []})
+    seen = set()
+    for _ in range(3):  # automático → claro → escuro → automático
+        click("//button[contains(@class,'theme')]")
+        seen.add(theme())
+    assert seen == {"light", "dark"}, f"tema não alternou: {seen}"
+    ok("ajuda da tela abre e fecha; tema alterna")
+
     # 9. Entrar com código e esqueci a senha
     s("POST", "/url", {"url": APP})
     wait_ready()
