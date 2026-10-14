@@ -89,12 +89,28 @@ gcloud run deploy placar --source . --region southamerica-east1 \
 gcloud run services update placar --region southamerica-east1 --update-env-vars PLACAR_ADMIN=<usuário>
 ```
 
-Deploys seguintes: o mesmo `gcloud run deploy` (as variáveis e o segredo
-continuam). Cada um leva uns 15 min, porque o Cloud Build compila tudo do
-zero; o CD pelo GitHub Actions, com cache, resolve isso.
+Deploys seguintes: automáticos, ver "CD" abaixo. À mão, o mesmo
+`gcloud run deploy --source .` funciona (as variáveis e o segredo
+continuam), mas leva uns 15 min, porque o Cloud Build compila tudo do zero.
 
 `--timeout 3600`: a conexão ao vivo cai depois de 1 hora e a página
 reconecta sozinha.
+
+## CD
+
+`.github/workflows/deploy.yml`: quando o CI passa num push na `main`, o
+GitHub Actions compila com `dx bundle` (com cache), monta a imagem com
+`runtime.Dockerfile` (só a etapa final do `Dockerfile`), manda para o
+Artifact Registry e troca a imagem do serviço no Cloud Run.
+
+Login sem chave (Workload Identity Federation), criado em 2026-10-14:
+
+- Pool `github`, provedor `github-oidc`. Condição: só
+  `dede999/family-domino-score` na `refs/heads/main`.
+- Conta `github-deploy@domino-237616.iam.gserviceaccount.com`, com
+  `run.developer` no projeto, `artifactregistry.writer` só no repositório
+  `cloud-run-source-deploy` e `iam.serviceAccountUser` na conta do Cloud
+  Run (para publicar revisões que rodam como ela).
 
 ## Testado
 

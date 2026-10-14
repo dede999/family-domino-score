@@ -35,7 +35,7 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 14. [x] Deploy no Cloud Run + Turso (ver `DEPLOY.md`). No ar em 2026-10-14.
     `PLACAR_ADMIN=andre_luiz` configurado.
 15. [ ] Guia de uso: "?" por tela e troca de tema no topo (ver a seção própria).
-16. [ ] CD pelo GitHub Actions (ver Infra). Pedido em 2026-10-14, passou
+16. [x] CD pelo GitHub Actions (ver Infra). Pedido em 2026-10-14, passou
     na frente do guia.
 
 ## Visual
@@ -288,7 +288,7 @@ primeiro uso e pode ser aberto de novo quando quiser.
 - [ ] **Comprimir a interface** (wasm de ~3 MB sem compressão): ativar
   gzip/brotli no servidor ou entregar os arquivos já comprimidos. Importa
   para quem abre pelo 4G.
-- [ ] **CD** (depois do deploy). Compilar no GitHub Actions com cache e só
+- [x] **CD** (feito em 2026-10-14, ver `docs/DEPLOY.md`). Compilar no GitHub Actions com cache e só
   mandar a imagem pronta ao Cloud Run (no Cloud Build cada deploy leva
   ~15 min, compilando tudo do zero). Não dá para automatizar o deploy antes de
   escolher a hospedagem. Quando houver: push na `main` com CI verde publica
