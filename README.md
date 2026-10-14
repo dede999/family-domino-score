@@ -45,7 +45,9 @@ opcionais:
 | `PLACAR_DB` | Caminho do arquivo SQLite local. |
 | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | Usar o Turso em vez do arquivo local. |
 | `PLACAR_ADMIN` | Usuário que gera links de troca de senha. |
-| `PLACAR_MAILBOX` | Arquivo onde os e-mails são escritos (enquanto não há envio de verdade). |
+| `PLACAR_SMTP_USER`, `PLACAR_SMTP_PASSWORD` | Conta do Gmail do app e uma senha de app dela, para mandar os códigos por e-mail. Sem elas, os e-mails só vão para o log. |
+| `PLACAR_SMTP_HOST` | Outro servidor SMTP (padrão: `smtp.gmail.com`). |
+| `PLACAR_MAILBOX` | Sem SMTP, arquivo onde os e-mails são escritos (o teste da interface lê os códigos dali). |
 | `PLACAR_HTTPS` | Cookie de sessão só por HTTPS (produção). |
 
 ## Testes
