@@ -2,10 +2,23 @@
 # O teste da interface (tools/ui_test.py) fica de fora: ele usa o Safari.
 name: CI
 
+# Mudança só em docs ou ferramentas de teste não roda o CI, e por isso
+# também não dispara o deploy (ver deploy.yml), que publicaria uma versão
+# idêntica.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - "tools/**"
+      - ".gitignore"
   pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - "tools/**"
+      - ".gitignore"
 
 # Um push novo na mesma branch cancela a execução anterior.
 concurrency:
