@@ -37,6 +37,11 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 15. [x] Guia de uso: "?" por tela e troca de tema no topo (ver a seção própria).
 16. [x] CD pelo GitHub Actions (ver Infra). Pedido em 2026-10-14, passou
     na frente do guia.
+17. [ ] Comprimir a interface (ver Infra). Fila pedida em 2026-10-14:
+18. [ ] README.md.
+19. [ ] Tabela de estatísticas sem rolar para o lado no celular.
+20. [ ] Envio de e-mail de verdade (ver Infra → Recuperar senha).
+21. [ ] Play Store (ver "Futuro: distribuição").
 
 ## Visual
 
