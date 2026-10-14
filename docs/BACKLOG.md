@@ -32,9 +32,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     Falta só o envio de e-mail de verdade, que depende do deploy.
 12. [x] Separar `src/model.rs` (ver Arquitetura).
 13. [x] Histórico em cartões.
-14. [ ] Deploy no Cloud Run + Turso (ver `DEPLOY.md`). Feito: Dockerfile,
-    cookie `Secure`, tempo real que fecha a conexão com a página escondida.
-    Falta: contas do André no Google Cloud e no Turso, e o primeiro deploy.
+14. [x] Deploy no Cloud Run + Turso (ver `DEPLOY.md`). No ar em 2026-10-14.
+    Falta só o André criar a conta no app para virar `PLACAR_ADMIN`.
 
 ## Visual
 
@@ -216,7 +215,7 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
   `assets/main.css`). Cliques antes da
   hidratação se perdem, num celular lento. CSS: enquanto `<html>` não tiver
   `data-pronto`, botões, links de ação e campos ficam apagados e sem clique.
-- [ ] Deploy: Turso e hospedagem. Escolhido em 2026-10-14: Cloud Run em São
+- [x] Deploy: Turso e hospedagem. Escolhido e feito em 2026-10-14: Cloud Run em São
   Paulo + Turso em São Paulo. Motivos e passos em `docs/DEPLOY.md`.
 - [x] **CI no GitHub Actions** (pedido em 2026-10-13). Feito:
   `.github/workflows/ci.yml`. A cada push na `main` e em PR:
@@ -262,7 +261,12 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     WhatsApp e SMS descartados por agora: a API oficial do WhatsApp pede
     verificação da empresa na Meta e modelos aprovados; SMS é pago por
     mensagem e pede cadastro de remetente.
-- [ ] **CD** (depois do deploy). Não dá para automatizar o deploy antes de
+- [ ] **Comprimir a interface** (wasm de ~3 MB sem compressão): ativar
+  gzip/brotli no servidor ou entregar os arquivos já comprimidos. Importa
+  para quem abre pelo 4G.
+- [ ] **CD** (depois do deploy). Compilar no GitHub Actions com cache e só
+  mandar a imagem pronta ao Cloud Run (no Cloud Build cada deploy leva
+  ~15 min, compilando tudo do zero). Não dá para automatizar o deploy antes de
   escolher a hospedagem. Quando houver: push na `main` com CI verde publica
   o servidor. Para o APK (ver "Futuro: distribuição"): tag `v*` gera o APK
   assinado e anexa ao Release, com a chave guardada nos secrets do GitHub.

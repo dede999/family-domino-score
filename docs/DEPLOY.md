@@ -3,6 +3,16 @@
 Escolha de 2026-10-14: **Google Cloud Run** em São Paulo
 (`southamerica-east1`) com o banco no **Turso**, também em São Paulo.
 
+No ar desde 2026-10-14: https://placar-276818208775.southamerica-east1.run.app
+
+- Projeto do Google Cloud: `domino-237616`. Usar a configuração `placar` do
+  gcloud (`CLOUDSDK_ACTIVE_CONFIG_NAME=placar`).
+- Banco: `placar`, no grupo `saopaulo` do Turso (`aws-sa-east-1`; o grupo
+  `default` da conta só aceita a Virgínia).
+- Token do banco no Secret Manager (`turso-token`), lido pelo Cloud Run.
+- Imagens no Artifact Registry (`cloud-run-source-deploy`) com limpeza
+  automática: ficam só as 3 mais recentes (cota grátis de 0,5 GB).
+
 ## Por que assim
 
 - O app é um processo só: o binário `server` entrega a interface (`public/`)
@@ -57,19 +67,31 @@ Depois:
 
 ```sh
 gcloud config set project <projeto>
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com
 
-turso db locations                      # conferir o código de São Paulo
-turso db create placar --location <são-paulo>
-turso db show placar --url              # TURSO_DATABASE_URL
-turso db tokens create placar           # TURSO_AUTH_TOKEN
+turso group create saopaulo --location aws-sa-east-1
+turso db create placar --group saopaulo
+# Token direto para o Secret Manager, sem passar pela tela.
+turso db tokens create placar | tr -d '\n' | gcloud secrets create turso-token --data-file=-
+gcloud secrets add-iam-policy-binding turso-token \
+  --member=serviceAccount:<número do projeto>-compute@developer.gserviceaccount.com \
+  --role=roles/secretmanager.secretAccessor
 
 # Compila no Cloud Build (o Mac tem pouco disco para o Docker) e publica.
+# A compilação passa de 10 min: `gcloud config set builds/timeout 3600`.
 gcloud run deploy placar --source . --region southamerica-east1 \
   --allow-unauthenticated --max-instances 1 --cpu 1 --memory 512Mi \
   --timeout 3600 \
-  --set-env-vars PLACAR_HTTPS=1,PLACAR_ADMIN=<usuário>,TURSO_DATABASE_URL=<url>,TURSO_AUTH_TOKEN=<token>
+  --set-env-vars PLACAR_HTTPS=1,TURSO_DATABASE_URL=libsql://placar-dede999.aws-sa-east-1.turso.io \
+  --set-secrets TURSO_AUTH_TOKEN=turso-token:latest
+
+# Administrador, depois de criar a conta no app (sem recompilar):
+gcloud run services update placar --region southamerica-east1 --update-env-vars PLACAR_ADMIN=<usuário>
 ```
+
+Deploys seguintes: o mesmo `gcloud run deploy` (as variáveis e o segredo
+continuam). Cada um leva uns 15 min, porque o Cloud Build compila tudo do
+zero; o CD pelo GitHub Actions, com cache, resolve isso.
 
 `--timeout 3600`: a conexão ao vivo cai depois de 1 hora e a página
 reconecta sozinha.
@@ -78,4 +100,8 @@ reconecta sozinha.
 
 - 2026-10-14: `dx bundle --release` no Mac e o `server` rodando com
   `IP=0.0.0.0 PORT=8091 PLACAR_HTTPS=1`: entrega a página e o cookie sai com
-  `Secure`. A imagem Docker ainda não foi construída (será no Cloud Build).
+  `Secure`.
+- 2026-10-14, em produção: a página abre, a interface fica pronta em ~1 s
+  no Safari (wasm de ~3 MB), e a busca de sala consulta o Turso em São
+  Paulo. O `dx` pré-compilado pede glibc 2.39, por isso as imagens são
+  Debian trixie.

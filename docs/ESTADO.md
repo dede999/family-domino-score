@@ -35,8 +35,8 @@ Turso (libsql). Objetivo principal: aprender Dioxus. As regras do jogo estão em
 
 ## Em andamento
 
-Deploy (item 14 da "Ordem atual"), ver `docs/DEPLOY.md`. A parte do
-código está pronta; falta o André criar as contas no Google Cloud e no Turso.
+Nada. O app está no ar (ver `docs/DEPLOY.md`). Próximo item: ver
+`BACKLOG.md`.
 
 ## Teste da interface
 
