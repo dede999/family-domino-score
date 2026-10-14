@@ -7,3 +7,4 @@ dist
 *.db-*
 tools/*.png
 tools/jar*.txt
+tools/sse.txt
