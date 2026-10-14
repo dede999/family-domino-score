@@ -1,0 +1,9 @@
+target
+dist
+.git
+.idea
+.DS_Store
+*.db
+*.db-*
+tools/*.png
+tools/jar*.txt
