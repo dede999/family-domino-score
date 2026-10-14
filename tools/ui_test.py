@@ -265,7 +265,7 @@ try:
     shot("4-estatisticas")
     ok("estatísticas e histórico aparecem")
 
-    # 7b. Histórico paginado: termina o boi 2 e joga mais 10 (12 terminados)
+    # 7b. Histórico em cartões: termina o boi 2 e joga mais 10 (12 terminados)
     def api(path, body):
         subprocess.run(["curl", "-s", "-b", jar, "-X", "POST", "-H", "Content-Type: application/json",
                         f"{APP}/api/salas/{code}/{path}", "-d", json.dumps(body)], capture_output=True)
@@ -275,15 +275,22 @@ try:
         api("boi", {})
         for n in range(4):
             api("maos", {"expected_hands": n, "starter_seat": 0, "outcome": "Batida", "winner_side": 0})
-    wait_text("Boi 12:", timeout=8)
-    hist = "//section[h2='Histórico']//li"
-    assert len(s("POST", "/elements", {"using": "xpath", "value": hist})) == 10, "histórico não mostra 10"
-    click(btn("Ver mais"))
-    wait_text("Boi 1:")
-    assert len(s("POST", "/elements", {"using": "xpath", "value": hist})) == 12
-    assert not s("POST", "/elements", {"using": "xpath", "value": btn("Ver mais")}), "sobrou o Ver mais"
-    shot("4b-ver-mais")
-    ok("histórico mostra 10 e o Ver mais traz o resto")
+    cards = "//div[@class='boi-grid']/button"
+    end = time.time() + 8
+    while len(s("POST", "/elements", {"using": "xpath", "value": cards})) != 12 and time.time() < end:
+        time.sleep(0.3)
+    assert len(s("POST", "/elements", {"using": "xpath", "value": cards})) == 12, "hoje não mostra os 12 bois"
+    wait_text("12 bois · André & Sobrinho 11 × 1 Pai & Tio")
+    click(f"{cards}[normalize-space(.//span[@class='boi-num'])='Boi 1']")
+    wait_text("Saiu na primeira mão válida")
+    find("//div[@class='drawer']//h2[.='Boi nº 1']")
+    shot("4b-gaveta")
+    click("//div[@class='drawer']//button[.='Fechar']")
+    end = time.time() + 5
+    while s("POST", "/elements", {"using": "xpath", "value": "//div[@class='drawer']"}) and time.time() < end:
+        time.sleep(0.2)
+    assert not s("POST", "/elements", {"using": "xpath", "value": "//div[@class='drawer']"}), "gaveta não fechou"
+    ok("histórico de hoje em cartões, com gaveta")
 
     # 7c. Estatísticas por período (todos os bois são de hoje)
     click(btn("Ano"))
@@ -309,6 +316,32 @@ try:
     s("POST", "/execute/sync", {"script": "window.scrollTo(0, 0)", "args": []})
     shot("4d-viradas")
     ok("viradas aparecem para quem está atrás")
+
+    # 7e. Histórico por dia: leva os bois 1 a 6 para os 6 dias anteriores
+    # direto no banco de teste (o app não deixa mudar a data de um boi).
+    db = os.environ.get("PLACAR_DB", "/Volumes/KINGSTON/.cargo-build/tmp/teste.db")
+    subprocess.run(["sqlite3", db, f"""
+        UPDATE bois SET started_at = started_at - 86400 * (7 - (
+            SELECT COUNT(*) FROM bois b2 WHERE b2.room_id = bois.room_id AND b2.id <= bois.id))
+        WHERE room_id = (SELECT id FROM rooms WHERE code = '{code}')
+          AND (SELECT COUNT(*) FROM bois b2 WHERE b2.room_id = bois.room_id AND b2.id <= bois.id) <= 6
+    """], check=True)
+    s("POST", "/refresh", {})
+    wait_ready()
+    heads = "//button[@class='day-head']"
+    wait_text("Ontem")
+    assert len(s("POST", "/elements", {"using": "xpath", "value": heads})) == 5, "primeira página não tem 5 dias"
+    click(btn("Ver mais dias"))
+    end = time.time() + 5
+    while len(s("POST", "/elements", {"using": "xpath", "value": heads})) != 7 and time.time() < end:
+        time.sleep(0.2)
+    assert len(s("POST", "/elements", {"using": "xpath", "value": heads})) == 7, "Ver mais dias não trouxe 7"
+    assert not s("POST", "/elements", {"using": "xpath", "value": btn("Ver mais dias")}), "sobrou o Ver mais dias"
+    # Dias fechados só buscam os bois quando abrem.
+    click(f"{heads}[contains(., 'Ontem')]")
+    wait_text("Boi 6")
+    shot("4e-dias")
+    ok("histórico por dia: 5 dias, Ver mais dias e dia fechado abre")
 
     # 8. Visitante: sai da conta e abre a sala pelo código
     s("POST", "/url", {"url": APP})
