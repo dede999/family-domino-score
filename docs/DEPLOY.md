@@ -103,6 +103,13 @@ GitHub Actions compila com `dx bundle` (com cache), monta a imagem com
 `runtime.Dockerfile` (só a etapa final do `Dockerfile`), manda para o
 Artifact Registry e troca a imagem do serviço no Cloud Run.
 
+Commit só de docs (`docs/**`, `**.md`, `tools/**`, `.gitignore`) não roda o
+CI (`paths-ignore` em `ci.yml`) e, por isso, não faz deploy: o gatilho do
+deploy (`workflow_run`) não aceita filtro de arquivos. Se um dia a `main`
+exigir o CI aprovado para aceitar PR, um PR só de docs ficaria esperando um
+CI que nunca roda; aí trocar o filtro por um passo que verifica os arquivos
+mudados.
+
 Login sem chave (Workload Identity Federation), criado em 2026-10-14:
 
 - Pool `github`, provedor `github-oidc`. Condição: só
