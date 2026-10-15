@@ -25,7 +25,7 @@ Turso (libsql). Objetivo principal: aprender Dioxus. As regras do jogo estão em
   (argon2 + cookie), e-mail confirmado por código, entrar com código, troca
   de senha por código ou por link do administrador,
   salas, jogadores avulsos, mãos, desfazer, edição de jogadores entre bois,
-  eventos ao vivo via SSE.
+  eventos ao vivo via SSE. E-mails pelo Gmail (SMTP) em produção.
 - Regras (`src/rules.rs`): boi até 4, lambreta, lambreta reversa, fechado em
   duplas com empate, saída pela carroça.
 - Interface (`src/ui/`): início com login e cadastro, nova sala, sala com
@@ -35,8 +35,8 @@ Turso (libsql). Objetivo principal: aprender Dioxus. As regras do jogo estão em
 
 ## Em andamento
 
-Nada. O app está no ar (ver `docs/DEPLOY.md`). Próximo item: ver
-`BACKLOG.md`.
+Nada. O app está no ar (ver `docs/DEPLOY.md`). Próximo item: Play Store
+(item 21 do `BACKLOG.md`).
 
 ## Teste da interface
 
@@ -83,8 +83,8 @@ PLACAR_MAILBOX=/Volumes/KINGSTON/.cargo-build/tmp/mailbox.txt \
 dx serve --platform web --port 8080 --open false --interactive false --hot-reload false
 ```
 
-`PLACAR_MAILBOX` é onde os e-mails vão parar enquanto não há envio de
-verdade (o teste da interface lê os códigos dali). `PLACAR_ADMIN=<usuário>`
+`PLACAR_MAILBOX` é onde os e-mails vão parar sem SMTP configurado
+(produção envia pelo Gmail, ver `DEPLOY.md`) (o teste da interface lê os códigos dali). `PLACAR_ADMIN=<usuário>`
 faz dessa conta a administradora, que gera links de troca de senha em
 "Minha conta".
 

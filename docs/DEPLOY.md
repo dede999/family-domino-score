@@ -52,7 +52,7 @@ uns US$ 0,12 por hora. Por isso:
 | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | Banco no Turso. Sem elas, usa um arquivo SQLite local. |
 | `PLACAR_HTTPS=1` | Cookie de sessão com `Secure`. |
 | `PLACAR_ADMIN` | Conta que gera links de troca de senha. |
-| `PLACAR_SMTP_USER` | Gmail do app, remetente dos códigos. |
+| `PLACAR_SMTP_USER` | Gmail do app, remetente dos códigos (`santa.maria.software.apps@gmail.com`, conta de envio compartilhada pelos apps do André, uma senha de app por app). |
 | `PLACAR_SMTP_PASSWORD` | Senha de app desse Gmail, no Secret Manager (`smtp-password`). |
 | `IP`, `PORT` | Já definidas no `Dockerfile` (`0.0.0.0:8080`). |
 
@@ -87,9 +87,11 @@ gcloud run deploy placar --source . --region southamerica-east1 \
   --set-env-vars PLACAR_HTTPS=1,TURSO_DATABASE_URL=libsql://placar-dede999.aws-sa-east-1.turso.io \
   --set-secrets TURSO_AUTH_TOKEN=turso-token:latest
 
-# E-mail: a senha de app do Gmail vai direto para o Secret Manager, digitada
-# no terminal de quem cuida do app (nunca no chat nem em arquivo).
-read -s SENHA && printf %s "$SENHA" | tr -d ' ' | gcloud secrets create smtp-password --data-file=- && unset SENHA
+# E-mail: a senha de app do Gmail vai direto da área de transferência para o
+# Secret Manager, no Terminal do Mac de quem cuida do app (nunca no chat nem
+# em arquivo; o `read -s` não funciona pelo `!` do Claude Code).
+pbpaste | tr -d ' \n' | gcloud secrets create smtp-password --data-file=-
+pbcopy < /dev/null
 gcloud secrets add-iam-policy-binding smtp-password \
   --member=serviceAccount:<número do projeto>-compute@developer.gserviceaccount.com \
   --role=roles/secretmanager.secretAccessor

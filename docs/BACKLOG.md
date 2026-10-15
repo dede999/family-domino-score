@@ -29,7 +29,6 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 9. [x] "Viradas" (os extras ficam para depois, não são obrigatórios).
 10. [x] Regras fora dos handlers (ver Arquitetura).
 11. [x] Recuperar senha (ver Infra), junto com separar as contas do placar.
-    Falta só o envio de e-mail de verdade, que depende do deploy.
 12. [x] Separar `src/model.rs` (ver Arquitetura).
 13. [x] Histórico em cartões.
 14. [x] Deploy no Cloud Run + Turso (ver `DEPLOY.md`). No ar em 2026-10-14.
@@ -41,7 +40,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 18. [x] README.md.
 19. [x] Tabela de estatísticas sem rolar para o lado no celular: até 560 px,
     um cartão por jogador.
-20. [ ] Envio de e-mail de verdade (ver Infra → Recuperar senha).
+20. [x] Envio de e-mail de verdade por SMTP (Gmail), no ar em 2026-10-15.
+    Os primeiros e-mails caem no spam (conta nova); marcar "Não é spam".
 21. [ ] Play Store (ver "Futuro: distribuição").
 
 ## Visual
