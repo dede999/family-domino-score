@@ -1,7 +1,7 @@
 //! Cadastro, login e sessão.
 
 use crate::views::{Account, UserInfo};
-use dioxus::fullstack::{Json, SetCookie, SetHeader};
+use dioxus::fullstack::{SetCookie, SetHeader};
 use dioxus::prelude::*;
 
 #[cfg(feature = "server")]
@@ -13,13 +13,16 @@ use dioxus::fullstack::{HeaderMap, StatusCode};
 #[cfg(feature = "server")]
 use libsql::params;
 
-type Login = (SetHeader<SetCookie>, Json<UserInfo>);
+/// Entrar só devolve o cookie de sessão; a tela relê o usuário com `me`.
+/// Não dá para mandar o usuário junto, num `(SetHeader, Json)`: o Dioxus
+/// 0.7 não confere o status da resposta nesse par e, num erro ("senha
+/// errada"), tenta ler o usuário e mostra "Sem conexão com o servidor.".
+type Login = SetHeader<SetCookie>;
 
 #[cfg(feature = "server")]
 async fn start_session(conn: &libsql::Connection, user: UserInfo) -> Result<Login, ServerFnError> {
     let token = create_session(conn, user.id).await?;
-    let cookie = SetHeader::new(session_cookie(&token, 60 * 60 * 24 * 365)).map_err(db_err)?;
-    Ok((cookie, Json(user)))
+    SetHeader::new(session_cookie(&token, 60 * 60 * 24 * 365)).map_err(db_err)
 }
 
 #[get("/api/me", headers: HeaderMap)]
