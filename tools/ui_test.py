@@ -406,6 +406,22 @@ try:
     click(btn("Trocar a senha e entrar"))
     wait_text("Olá, André")
     ok("trocou a senha esquecida pelo código")
+
+    # 10. Exclui a conta: senha errada recusa; a certa apaga e sai.
+    click("//a[normalize-space()='Minha conta']")
+    click("//a[normalize-space()='Excluir minha conta']")
+    wait_text("Não dá para desfazer")
+    type_in("//label[contains(.,'Sua senha')]/input", "errada1")
+    click(btn("Excluir minha conta"))
+    wait_text("Senha incorreta.")
+    type_in("//label[contains(.,'Sua senha')]/input", "outrasenha")
+    click(btn("Excluir minha conta"))
+    wait_text("Criar uma conta")
+    type_in("//label[contains(.,'Usuário')]/input", user)
+    type_in("//label[contains(.,'Senha')]/input", "outrasenha")
+    click("//form[contains(@class,'stack')]//button[@type='submit']")
+    wait_text("Usuário ou senha incorretos.")
+    ok("excluiu a conta")
     print("TUDO OK")
 finally:
     if sid:

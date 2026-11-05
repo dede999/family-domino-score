@@ -193,6 +193,87 @@ pub async fn user_id_by_username(
     }
 }
 
+// ---- Exclusão da conta ----
+
+/// Apaga a conta e o que é só dela: sessões, códigos, e-mail e senha.
+///
+/// - Nas salas em que ela joga, o jogador fica com o mesmo nome, sem conta:
+///   o histórico da sala é de todos que jogaram.
+/// - As salas que ela criou passam para o primeiro jogador com conta, pela
+///   ordem da roda. Sem nenhum, a sala é apagada com o histórico.
+///
+/// Devolve as salas que mudaram, para avisar quem está assistindo.
+pub async fn delete_account(conn: &Connection, user_id: i64) -> Result<Vec<i64>, ServerFnError> {
+    async fn ids(
+        conn: &Connection,
+        sql: &str,
+        params: impl libsql::params::IntoParams,
+    ) -> Result<Vec<i64>, ServerFnError> {
+        let mut rows = conn.query(sql, params).await.map_err(db_err)?;
+        let mut ids = Vec::new();
+        while let Some(row) = rows.next().await.map_err(db_err)? {
+            ids.push(row.get(0).map_err(db_err)?);
+        }
+        Ok(ids)
+    }
+
+    let tx = conn.transaction().await.map_err(db_err)?;
+    let mut changed = ids(
+        &tx,
+        "SELECT DISTINCT room_id FROM players WHERE user_id = ?1",
+        params![user_id],
+    )
+    .await?;
+    for room in ids(
+        &tx,
+        "SELECT id FROM rooms WHERE owner_id = ?1",
+        params![user_id],
+    )
+    .await?
+    {
+        let heir = ids(
+            &tx,
+            "SELECT user_id FROM players
+             WHERE room_id = ?1 AND user_id IS NOT NULL AND user_id <> ?2
+             ORDER BY seat LIMIT 1",
+            params![room, user_id],
+        )
+        .await?;
+        if let Some(heir) = heir.first() {
+            tx.execute(
+                "UPDATE rooms SET owner_id = ?1 WHERE id = ?2",
+                params![*heir, room],
+            )
+            .await
+            .map_err(db_err)?;
+            if !changed.contains(&room) {
+                changed.push(room);
+            }
+        } else {
+            tx.execute_batch(&format!(
+                "DELETE FROM pairs WHERE room_id = {room};
+                 DELETE FROM maos WHERE boi_id IN (SELECT id FROM bois WHERE room_id = {room});
+                 DELETE FROM bois WHERE room_id = {room};
+                 DELETE FROM players WHERE room_id = {room};
+                 DELETE FROM rooms WHERE id = {room};"
+            ))
+            .await
+            .map_err(db_err)?;
+        }
+    }
+    // Os ids são números, então dá para pô-los direto no SQL.
+    tx.execute_batch(&format!(
+        "UPDATE players SET user_id = NULL WHERE user_id = {user_id};
+         DELETE FROM codes WHERE user_id = {user_id};
+         DELETE FROM sessions WHERE user_id = {user_id};
+         DELETE FROM users WHERE id = {user_id};"
+    ))
+    .await
+    .map_err(db_err)?;
+    tx.commit().await.map_err(db_err)?;
+    Ok(changed)
+}
+
 // ---- Códigos de uso único ----
 
 /// Guarda um código novo (só o hash) e apaga os anteriores do mesmo tipo.
@@ -457,5 +538,61 @@ mod tests {
         assert_eq!(code_state(100, MAX_ATTEMPTS - 1, 50), CodeState::Usable);
         let c = new_code();
         assert!(c.len() == 6 && c.chars().all(|c| c.is_ascii_digit()));
+    }
+
+    #[tokio::test]
+    async fn excluir_conta_passa_a_sala_ou_apaga() {
+        let (_db, conn) = crate::server::test_db().await;
+        // 1 = quem sai, 2 = outro com conta. Sala 10: de 1, com 2 jogando
+        // (passa para 2). Sala 20: de 1, só avulsos (apagada). Sala 30: de 2,
+        // com 1 jogando (fica, com 1 avulso).
+        conn.execute_batch(
+            "INSERT INTO users (id, username, display_name, password_hash) VALUES
+                 (1, 'sai', 'Sai', 'x'), (2, 'fica', 'Fica', 'x');
+             INSERT INTO sessions (token, user_id) VALUES ('t1', 1), ('t2', 2);
+             INSERT INTO codes (user_id, purpose, code_hash, expires_at) VALUES (1, 'login', 'h', 0);
+             INSERT INTO rooms (id, code, name, mode, owner_id) VALUES
+                 (10, 'AAA', 'a', 'individual', 1),
+                 (20, 'BBB', 'b', 'individual', 1),
+                 (30, 'CCC', 'c', 'individual', 2);
+             INSERT INTO players (id, room_id, name, user_id, seat) VALUES
+                 (1, 10, 'Sai', 1, 0), (2, 10, 'Avulso', NULL, 1), (3, 10, 'Fica', 2, 2),
+                 (4, 20, 'Sai', 1, 0), (5, 20, 'Avulso', NULL, 1),
+                 (6, 30, 'Fica', 2, 0), (7, 30, 'Sai', 1, 1);
+             INSERT INTO bois (id, room_id, seating) VALUES (1, 20, '[4,5]'), (2, 30, '[6,7]');
+             INSERT INTO maos (boi_id, seq, starter_seat, outcome, winner_side) VALUES
+                 (1, 1, 0, 'batida', 0), (2, 1, 0, 'batida', 1);",
+        )
+        .await
+        .unwrap();
+
+        let mut changed = delete_account(&conn, 1).await.unwrap();
+        changed.sort();
+        assert_eq!(changed, vec![10, 20, 30]);
+
+        let count = |sql: &'static str| {
+            let conn = conn.clone();
+            async move {
+                let mut rows = conn.query(sql, ()).await.unwrap();
+                rows.next().await.unwrap().unwrap().get::<i64>(0).unwrap()
+            }
+        };
+        assert_eq!(count("SELECT count(*) FROM users WHERE id = 1").await, 0);
+        assert_eq!(count("SELECT count(*) FROM sessions").await, 1);
+        assert_eq!(count("SELECT count(*) FROM codes").await, 0);
+        assert_eq!(count("SELECT owner_id FROM rooms WHERE id = 10").await, 2);
+        assert_eq!(count("SELECT count(*) FROM rooms WHERE id = 20").await, 0);
+        assert_eq!(
+            count("SELECT count(*) FROM players WHERE room_id = 20").await,
+            0
+        );
+        assert_eq!(count("SELECT count(*) FROM maos WHERE boi_id = 1").await, 0);
+        // Na sala dos outros, o nome e as mãos continuam, sem a conta.
+        assert_eq!(
+            count("SELECT count(*) FROM players WHERE id = 7 AND name = 'Sai' AND user_id IS NULL")
+                .await,
+            1
+        );
+        assert_eq!(count("SELECT count(*) FROM maos WHERE boi_id = 2").await, 1);
     }
 }

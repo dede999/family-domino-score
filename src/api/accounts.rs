@@ -245,6 +245,32 @@ pub async fn reset_password(
     start_session(&conn, user).await
 }
 
+/// Exclui a própria conta, com a senha para confirmar (ver
+/// `accounts::delete_account`), e sai.
+#[post("/api/conta/excluir", headers: HeaderMap)]
+pub async fn delete_my_account(password: String) -> Result<SetHeader<SetCookie>, ServerFnError> {
+    let conn = conn().await?;
+    let user = require_user(&conn, &headers).await?;
+    let mut rows = conn
+        .query(
+            "SELECT password_hash FROM users WHERE id = ?1",
+            params![user.id],
+        )
+        .await
+        .map_err(db_err)?;
+    let hash: String = match rows.next().await.map_err(db_err)? {
+        Some(row) => row.get(0).map_err(db_err)?,
+        None => String::new(),
+    };
+    if !verify_password(&password, &hash) {
+        return Err(user_err(StatusCode::UNAUTHORIZED, "Senha incorreta."));
+    }
+    for room in delete_account(&conn, user.id).await? {
+        crate::server::notify(room);
+    }
+    SetHeader::new(session_cookie("", 0)).map_err(db_err)
+}
+
 /// Administrador: gera um link de troca de senha para alguém sem e-mail.
 /// Devolve o caminho do link (sem o endereço do site).
 #[post("/api/admin/link", headers: HeaderMap)]

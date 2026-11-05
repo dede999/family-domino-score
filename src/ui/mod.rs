@@ -9,7 +9,7 @@ mod room;
 mod theme;
 mod top_bar;
 
-pub use account::{EnterWithCode, ForgotPassword, LinkReset, MyAccount};
+pub use account::{DeleteAccount, EnterWithCode, ForgotPassword, LinkReset, MyAccount};
 pub use home::Home;
 pub use new_room::NewRoom;
 pub use room::Room;

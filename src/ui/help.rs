@@ -152,6 +152,11 @@ fn body(help: Help) -> Element {
             p {
                 "Só aparece para quem cuida do app. Gera um link que vale por 1 hora e uma vez só, para mandar pelo WhatsApp a quem esqueceu a senha e não tem e-mail."
             }
+            h3 { "Excluir a conta" }
+            p {
+                b { "Excluir minha conta" }
+                ", no pé da página, apaga a conta. Seu nome continua no placar das salas em que você jogou, e as salas que você criou passam para outro jogador com conta."
+            }
             {theme_tip()}
         },
         Help::CodeLogin => rsx! {

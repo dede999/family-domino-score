@@ -141,6 +141,19 @@ pub async fn conn() -> Result<Connection, ServerFnError> {
     db.connect().map_err(db_err)
 }
 
+/// Banco vazio na memória, para os testes.
+#[cfg(test)]
+pub async fn test_db() -> (Database, Connection) {
+    let db = libsql::Builder::new_local(":memory:")
+        .build()
+        .await
+        .unwrap();
+    let conn = db.connect().unwrap();
+    conn.execute_batch(SCHEMA).await.unwrap();
+    migrate(&conn).await.unwrap();
+    (db, conn)
+}
+
 /// Colunas acrescentadas depois da primeira versão do banco.
 async fn migrate(conn: &Connection) -> Result<(), libsql::Error> {
     async fn has_column(

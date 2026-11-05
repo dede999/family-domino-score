@@ -226,6 +226,9 @@ pub fn MyAccount() -> Element {
             if acc.is_admin {
                 AdminLinkCard {}
             }
+            p { class: "small",
+                Link { to: Route::DeleteAccount {}, "Excluir minha conta" }
+            }
         },
     };
     rsx! {
@@ -331,6 +334,88 @@ fn EmailCard(has_email: bool, on_done: EventHandler<()>) -> Element {
 
 /// Administrador: gera o link de troca de senha e abre o WhatsApp com a
 /// mensagem pronta, para mandar do próprio celular.
+/// Exclusão da própria conta. Sem login, explica como chegar aqui: este
+/// endereço é o link de exclusão informado na Play Store.
+#[component]
+pub fn DeleteAccount() -> Element {
+    let mut me = use_me_resource();
+    let nav = use_navigator();
+    let mut password = use_signal(String::new);
+    let mut busy = use_signal(|| false);
+    let mut error = use_signal(|| None::<String>);
+
+    let submit = move |e: FormEvent| {
+        e.prevent_default();
+        busy.set(true);
+        error.set(None);
+        spawn(async move {
+            match api::delete_my_account(password()).await {
+                Ok(_) => {
+                    me.restart();
+                    nav.push(Route::Home {});
+                }
+                Err(e) => error.set(Some(error_message(&e))),
+            }
+            busy.set(false);
+        });
+    };
+
+    let body = if me.read().is_none() {
+        rsx! { p { class: "muted", "Carregando…" } }
+    } else if current_user(me).is_none() {
+        rsx! {
+            p {
+                "Para excluir sua conta, entre nela e volte a esta página, ou toque em "
+                b { "Minha conta" }
+                " e depois em "
+                b { "Excluir minha conta" }
+                "."
+            }
+            p { Link { to: Route::Home {}, "Entrar" } }
+        }
+    } else {
+        rsx! {
+            ul {
+                li { "Sua conta, seu e-mail e sua senha são apagados." }
+                li {
+                    "Nas salas em que você joga, seu nome continua no placar e no histórico, sem ligação com a conta."
+                }
+                li {
+                    "As salas que você criou passam para outro jogador com conta. Se não houver nenhum, a sala é apagada com todo o histórico."
+                }
+                li { "Não dá para desfazer." }
+            }
+            form { class: "stack", onsubmit: submit,
+                label {
+                    "Sua senha, para confirmar"
+                    input {
+                        r#type: "password",
+                        value: "{password}",
+                        autocomplete: "current-password",
+                        oninput: move |e| password.set(e.value()),
+                    }
+                }
+                if let Some(err) = error() {
+                    p { class: "error", "{err}" }
+                }
+                button { r#type: "submit", class: "danger", disabled: busy(), "Excluir minha conta" }
+            }
+        }
+    };
+
+    rsx! {
+        main { class: "page",
+            TopBar { help: Help::Account,
+                Link { to: Route::Home {}, "← Início" }
+            }
+            section { class: "card",
+                h2 { "Excluir minha conta" }
+                {body}
+            }
+        }
+    }
+}
+
 #[component]
 fn AdminLinkCard() -> Element {
     let mut username = use_signal(String::new);
