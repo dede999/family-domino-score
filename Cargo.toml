@@ -23,4 +23,7 @@ lettre = { version = "0.11", optional = true, default-features = false, features
 [features]
 default = ["web"]
 web = ["dioxus/web", "dep:gloo-timers"]
+# App Android (`dx bundle --platform android`): a mesma interface, falando
+# com o servidor publicado.
+mobile = ["dioxus/mobile", "dep:tokio"]
 server = ["dioxus/server", "dep:libsql", "dep:tokio", "dep:argon2", "dep:rand", "dep:lettre"]

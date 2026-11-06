@@ -42,7 +42,9 @@ pub fn current_user(me: MeResource) -> Option<UserInfo> {
 pub async fn sleep_ms(ms: u32) {
     #[cfg(feature = "web")]
     gloo_timers::future::TimeoutFuture::new(ms).await;
-    #[cfg(not(feature = "web"))]
+    #[cfg(feature = "mobile")]
+    tokio::time::sleep(std::time::Duration::from_millis(ms.into())).await;
+    #[cfg(not(any(feature = "web", feature = "mobile")))]
     let _ = ms;
 }
 

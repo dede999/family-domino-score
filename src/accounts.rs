@@ -131,7 +131,7 @@ pub fn session_cookie(token: &str, max_age: u32) -> String {
     format!("{SESSION_COOKIE}={token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={max_age}{secure}")
 }
 
-fn session_token(headers: &HeaderMap) -> Option<String> {
+pub fn session_token(headers: &HeaderMap) -> Option<String> {
     headers
         .get_all(dioxus::fullstack::http::header::COOKIE)
         .iter()

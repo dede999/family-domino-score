@@ -98,6 +98,18 @@ pub async fn logout() -> Result<SetHeader<SetCookie>, ServerFnError> {
     SetHeader::new(session_cookie("", 0)).map_err(db_err)
 }
 
+/// O token da sessão atual, para o app Android guardar: lá o cookie só
+/// vive na memória e some quando o app fecha (ver `native.rs`). Quem já
+/// manda o cookie não descobre nada que não tenha.
+#[get("/api/sessao", headers: HeaderMap)]
+pub async fn session_token() -> Result<Option<String>, ServerFnError> {
+    let conn = conn().await?;
+    if current_user(&conn, &headers).await?.is_none() {
+        return Ok(None);
+    }
+    Ok(crate::accounts::session_token(&headers))
+}
+
 /// A própria conta: nome, e-mail confirmado e se é administrador.
 #[get("/api/conta", headers: HeaderMap)]
 pub async fn my_account() -> Result<Account, ServerFnError> {

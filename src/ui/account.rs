@@ -431,6 +431,10 @@ fn AdminLinkCard() -> Element {
         spawn(async move {
             match api::admin_reset_link(username()).await {
                 Ok(path) => {
+                    // No app Android a página não vem do site.
+                    #[cfg(feature = "mobile")]
+                    let origin = crate::native::site_origin().to_string();
+                    #[cfg(not(feature = "mobile"))]
                     let origin = document::eval("return location.origin")
                         .await
                         .ok()

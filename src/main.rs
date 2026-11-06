@@ -4,6 +4,8 @@ use dioxus::prelude::*;
 mod accounts;
 mod api;
 mod model;
+#[cfg(feature = "mobile")]
+mod native;
 mod palette;
 mod period;
 // Parte das regras e dos tipos só é usada no servidor.
@@ -48,13 +50,18 @@ enum Route {
 const CSS: Asset = asset!("/assets/main.css");
 
 fn main() {
+    #[cfg(feature = "mobile")]
+    native::setup();
     dioxus::launch(App);
 }
 
 #[component]
 fn App() -> Element {
     // Usuário logado, disponível para todas as telas. `restart()` depois de entrar ou sair.
+    #[cfg(not(feature = "mobile"))]
     let me = use_resource(api::me);
+    #[cfg(feature = "mobile")]
+    let me = use_resource(native::me);
     use_context_provider(|| me);
 
     // Efeitos só rodam no navegador, depois da hidratação. Antes disso a página
