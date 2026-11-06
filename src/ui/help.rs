@@ -13,6 +13,7 @@ pub enum Help {
     Account,
     CodeLogin,
     NewPassword,
+    Privacy,
 }
 
 impl Help {
@@ -24,6 +25,7 @@ impl Help {
             Help::Account => "Minha conta",
             Help::CodeLogin => "Entrar com código",
             Help::NewPassword => "Senha nova",
+            Help::Privacy => "Privacidade",
         }
     }
 }
@@ -169,6 +171,13 @@ fn body(help: Help) -> Element {
             }
             p {
                 "Sem e-mail confirmado não dá para receber o código. Peça um link a quem cuida do app."
+            }
+        },
+        Help::Privacy => rsx! {
+            p {
+                "Esta página conta o que o app guarda sobre você e como apagar. Para excluir a conta, entre e vá em "
+                b { "Minha conta" }
+                "."
             }
         },
         Help::NewPassword => rsx! {

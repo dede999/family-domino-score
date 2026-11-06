@@ -32,6 +32,9 @@ pub fn Home() -> Element {
             } else {
                 AuthForm {}
             }
+            p { class: "small muted",
+                Link { to: Route::Privacy {}, "Privacidade" }
+            }
         }
     }
 }

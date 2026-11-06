@@ -5,6 +5,7 @@ mod help;
 mod history;
 mod home;
 mod new_room;
+mod privacy;
 mod room;
 mod theme;
 mod top_bar;
@@ -12,6 +13,7 @@ mod top_bar;
 pub use account::{DeleteAccount, EnterWithCode, ForgotPassword, LinkReset, MyAccount};
 pub use home::Home;
 pub use new_room::NewRoom;
+pub use privacy::Privacy;
 pub use room::Room;
 pub use theme::THEME_SCRIPT;
 

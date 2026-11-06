@@ -16,7 +16,10 @@ mod server;
 mod ui;
 mod views;
 
-use ui::{DeleteAccount, EnterWithCode, ForgotPassword, Home, LinkReset, MyAccount, NewRoom, Room};
+use ui::{
+    DeleteAccount, EnterWithCode, ForgotPassword, Home, LinkReset, MyAccount, NewRoom, Privacy,
+    Room,
+};
 
 #[derive(Routable, Clone, PartialEq)]
 enum Route {
@@ -37,6 +40,9 @@ enum Route {
     // Endereço fixo: é o link de exclusão de conta informado na Play Store.
     #[route("/excluir-conta")]
     DeleteAccount {},
+    // Também informado na Play Store.
+    #[route("/privacidade")]
+    Privacy {},
 }
 
 const CSS: Asset = asset!("/assets/main.css");
