@@ -43,6 +43,16 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 20. [x] Envio de e-mail de verdade por SMTP (Gmail), no ar em 2026-10-15.
     Os primeiros e-mails caem no spam (conta nova); marcar "Não é spam".
 21. [ ] Play Store (ver "Futuro: distribuição").
+22. [ ] **(em discussão)** Façanhas e curiosidades da mão (pedido em
+    2026-11-08), por exemplo "ganhou com 6 carroças na mão". O app não
+    sabe as pedras de ninguém, então quem marca precisa contar. Proposta:
+    uma etiqueta opcional, posta depois, no detalhe da mão (lista fixa de
+    façanhas + texto livre), para não atrasar a marcação na mesa. Aparece
+    no histórico e nas estatísticas. Falta: a lista de façanhas da família.
+23. [ ] **(em discussão)** Modo de bateria reduzida (pedido em 2026-11-08).
+    Falta saber o que gasta bateria hoje. O que já existe: tema escuro
+    (economiza em tela OLED) e a conexão ao vivo fecha com a tela
+    apagada ou o app em segundo plano.
 
 ## Visual
 
