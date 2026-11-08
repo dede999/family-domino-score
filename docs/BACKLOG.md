@@ -43,16 +43,27 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
 20. [x] Envio de e-mail de verdade por SMTP (Gmail), no ar em 2026-10-15.
     Os primeiros e-mails caem no spam (conta nova); marcar "Não é spam".
 21. [ ] Play Store (ver "Futuro: distribuição").
-22. [ ] **(em discussão)** Façanhas e curiosidades da mão (pedido em
-    2026-11-08), por exemplo "ganhou com 6 carroças na mão". O app não
-    sabe as pedras de ninguém, então quem marca precisa contar. Proposta:
-    uma etiqueta opcional, posta depois, no detalhe da mão (lista fixa de
-    façanhas + texto livre), para não atrasar a marcação na mesa. Aparece
-    no histórico e nas estatísticas. Falta: a lista de façanhas da família.
+22. [ ] **(em discussão)** Façanhas (pedido em 2026-11-08): caixa de texto
+    livre e opcional ao marcar o resultado. Vazia, salva só o resultado;
+    escrita, salva o texto junto. Aparece no histórico e na gaveta do boi.
+    Texto livre não dá para contar nas estatísticas; no máximo uma lista
+    "Façanhas do período". Falta: "partida" aqui é a mão ou o boi?
 23. [ ] **(em discussão)** Modo de bateria reduzida (pedido em 2026-11-08).
-    Falta saber o que gasta bateria hoje. O que já existe: tema escuro
-    (economiza em tela OLED) e a conexão ao vivo fecha com a tela
-    apagada ou o app em segundo plano.
+    O tema escuro já é isso, e só economiza em tela OLED. O André acha que
+    o gasto é da bateria do celular (7 anos). Proposta: não fazer.
+24. [ ] **(em discussão)** Marcar sem internet (pedido em 2026-11-08). Fila
+    de eventos no aparelho (`localStorage`), enviada em ordem. Cuidados:
+    cada evento com um id único, para o reenvio não duplicar a mão quando
+    a resposta se perde; tentar de novo também ao voltar a internet e ao
+    abrir o app, não só no próximo evento; desfazer uma mão ainda na fila
+    tira da fila; o placar na tela calcula as regras localmente; dois
+    aparelhos marcando a mesma sala sem internet entram em conflito. No
+    site, a página nem abre sem internet (precisaria de service worker);
+    no app Android a interface já vem no aparelho. Grande: depois da Play
+    Store.
+25. [ ] **(em discussão)** Estatísticas das últimas 10, 15 ou 20 partidas,
+    como mais uma opção de período (pedido em 2026-11-08). Falta:
+    partidas = bois ou mãos?
 
 ## Visual
 
