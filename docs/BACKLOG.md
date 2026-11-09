@@ -64,9 +64,9 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     Store.
 25. [ ] **(em discussão)** Estatísticas das últimas 10, 15 ou 20 mãos,
     como mais uma opção de período (pedido em 2026-11-08).
-26. [ ] **(em discussão)** Sequência de mãos, como a "run" da NBA (pedido
-    em 2026-11-08): "Pai e André ganharam as últimas 6 mãos." Uma linha
-    abaixo das cruzes, como as viradas. Proposta:
+26. [ ] Sequência de mãos, como a "run" da NBA (pedido em 2026-11-08,
+    pontos confirmados pelo André no mesmo dia): "Pai e André ganharam as
+    últimas 6 mãos." Uma linha abaixo das cruzes, como as viradas:
     - Só mãos ganhas em seguida, sem interrupção. O "10 a 2" da NBA (com
       algumas perdidas no meio) é mais difícil de explicar.
     - Passa de um boi para o outro: dentro de um boi a sequência vai no
