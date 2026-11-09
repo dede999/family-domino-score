@@ -47,7 +47,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     livre e opcional ao marcar o resultado. Vazia, salva só o resultado;
     escrita, salva o texto junto. Aparece no histórico e na gaveta do boi.
     Texto livre não dá para contar nas estatísticas; no máximo uma lista
-    "Façanhas do período". Falta: "partida" aqui é a mão ou o boi?
+    "Façanhas do período". Uma façanha é de uma mão (o André confirmou:
+    "partida" = mão, a bolinha que entra no boi).
 23. [ ] **(em discussão)** Modo de bateria reduzida (pedido em 2026-11-08).
     O tema escuro já é isso, e só economiza em tela OLED. O André acha que
     o gasto é da bateria do celular (7 anos). Proposta: não fazer.
@@ -61,9 +62,20 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     site, a página nem abre sem internet (precisaria de service worker);
     no app Android a interface já vem no aparelho. Grande: depois da Play
     Store.
-25. [ ] **(em discussão)** Estatísticas das últimas 10, 15 ou 20 partidas,
-    como mais uma opção de período (pedido em 2026-11-08). Falta:
-    partidas = bois ou mãos?
+25. [ ] **(em discussão)** Estatísticas das últimas 10, 15 ou 20 mãos,
+    como mais uma opção de período (pedido em 2026-11-08).
+26. [ ] **(em discussão)** Sequência de mãos, como a "run" da NBA (pedido
+    em 2026-11-08): "Pai e André ganharam as últimas 6 mãos." Uma linha
+    abaixo das cruzes, como as viradas. Proposta:
+    - Só mãos ganhas em seguida, sem interrupção. O "10 a 2" da NBA (com
+      algumas perdidas no meio) é mais difícil de explicar.
+    - Passa de um boi para o outro: dentro de um boi a sequência vai no
+      máximo até 4, e o interessante é atravessar bois.
+    - Conta no confronto atual (os mesmos dois lados). No individual, a
+      sequência é de um jogador.
+    - Mão empatada não conta nem quebra a sequência.
+    - Só aparece a partir de 4 mãos seguidas, para não virar ruído.
+    - Pequeno: o cálculo vai em `src/rules.rs`, com testes, como as viradas.
 
 ## Visual
 
