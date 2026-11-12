@@ -23,28 +23,38 @@ use ui::{
     Room,
 };
 
-#[derive(Routable, Clone, PartialEq)]
-enum Route {
-    #[route("/")]
-    Home {},
-    #[route("/nova-sala")]
-    NewRoom {},
-    #[route("/sala/:code")]
-    Room { code: String },
-    #[route("/conta")]
-    MyAccount {},
-    #[route("/entrar-com-codigo")]
-    EnterWithCode {},
-    #[route("/esqueci-a-senha")]
-    ForgotPassword {},
-    #[route("/nova-senha/:username/:token")]
-    LinkReset { username: String, token: String },
-    // Endereço fixo: é o link de exclusão de conta informado na Play Store.
-    #[route("/excluir-conta")]
-    DeleteAccount {},
-    // Também informado na Play Store.
-    #[route("/privacidade")]
-    Privacy {},
+use routes::Route;
+
+// O derive `Routable` do Dioxus 0.7.10 gera código que o Rust 1.100 acusa como
+// inalcançável. Num módulo próprio, a permissão vale para o código gerado e só
+// para ele.
+mod routes {
+    #![allow(unreachable_code)]
+    use super::*;
+
+    #[derive(Routable, Clone, PartialEq)]
+    pub enum Route {
+        #[route("/")]
+        Home {},
+        #[route("/nova-sala")]
+        NewRoom {},
+        #[route("/sala/:code")]
+        Room { code: String },
+        #[route("/conta")]
+        MyAccount {},
+        #[route("/entrar-com-codigo")]
+        EnterWithCode {},
+        #[route("/esqueci-a-senha")]
+        ForgotPassword {},
+        #[route("/nova-senha/:username/:token")]
+        LinkReset { username: String, token: String },
+        // Endereço fixo: é o link de exclusão de conta informado na Play Store.
+        #[route("/excluir-conta")]
+        DeleteAccount {},
+        // Também informado na Play Store.
+        #[route("/privacidade")]
+        Privacy {},
+    }
 }
 
 const CSS: Asset = asset!("/assets/main.css");
