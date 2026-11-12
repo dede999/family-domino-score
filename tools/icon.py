@@ -114,12 +114,12 @@ def main():
     feature().save(os.path.join(OUT, "play-feature-1024x500.png"))
     # Launcher: ícone comum (48dp) e frente do adaptativo (108dp). No
     # adaptativo, só o círculo central de 66dp aparece com certeza; a pedra
-    # inteira cabe nele com a escala 0.6.
+    # inteira cabe nele com a escala 0.8 (meia diagonal: 28 de 33dp).
     for name, mult in (("mdpi", 1), ("hdpi", 1.5), ("xhdpi", 2), ("xxhdpi", 3), ("xxxhdpi", 4)):
         folder = os.path.join(OUT, "android", f"mipmap-{name}")
         os.makedirs(folder, exist_ok=True)
         on_green(tile_layer(round(48 * mult))).save(os.path.join(folder, "ic_launcher.webp"))
-        tile_layer(round(108 * mult), 0.6).save(
+        tile_layer(round(108 * mult), 0.8).save(
             os.path.join(folder, "ic_launcher_foreground.webp"))
 
 

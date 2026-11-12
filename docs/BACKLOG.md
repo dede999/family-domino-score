@@ -372,12 +372,18 @@ Objetivo do André: aprender a lançar um app numa loja. Ordem: primeiro o APK
 no GitHub (Releases do repositório público `dede999/family-domino-score`),
 depois a Play Store.
 
-- [ ] **Deploy do servidor antes de qualquer APK.** O app Android é só a
+- [x] **Deploy do servidor antes de qualquer APK.** O app Android é só a
   interface: cadastro, salas e placar ao vivo vêm do servidor. Sem servidor
   publicado (Turso + hospedagem), o APK não funciona fora de casa.
-- [ ] **Ambiente Android no KINGSTON.** SDK e NDK somam vários GB, e o disco
+- [x] **Ambiente Android no KINGSTON.** SDK e NDK somam vários GB, e o disco
   interno tem menos de 1 GB livre. Instalar com `ANDROID_HOME` no KINGSTON.
   Build com `dx bundle --platform android`.
+  Feito: `/Volumes/KINGSTON/Android`. O pacote assinado sai de
+  `sh tools/android_release.sh` (AAB e APK em `dist/`), que também põe o
+  ícone (`tools/icon.py`) e o número da versão, coisas que o dx 0.7.10 não
+  deixa configurar. A chave de envio é de `tools/android_key.sh`. A
+  atividade própria (`android/MainActivity.kt`) afasta a página das barras
+  do sistema e do teclado.
 - [ ] **APK em Releases do GitHub.** A família instala por fora da loja
   ("fontes desconhecidas"). Assinar sempre com a mesma chave, guardada fora
   do repositório: sem ela não dá para publicar atualizações.
@@ -391,4 +397,4 @@ depois a Play Store.
   - A loja pede AAB (não APK), um nível mínimo recente de API do Android e
     uma página de política de privacidade.
   - App com cadastro precisa oferecer **exclusão de conta** dentro do app e
-    por um link na web. Hoje o app não tem isso.
+    por um link na web. Feito: `/excluir-conta`.
