@@ -1,5 +1,7 @@
 [application]
 name = "placar"
+# App Android: espaço das barras do sistema (ver o arquivo).
+android_main_activity = "android/MainActivity.kt"
 
 [web.app]
 title = "Placar de Dominó"
@@ -21,3 +23,4 @@ min_sdk = 24
 # A Play Store exige um nível recente (36 desde agosto de 2026).
 target_sdk = 36
 compile_sdk = 36
+proguard_rules = ["android/proguard.pro"]
