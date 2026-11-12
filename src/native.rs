@@ -23,9 +23,12 @@ const SERVER_URL: &str = match option_env!("PLACAR_SERVER") {
 const SESSION_COOKIE: &str = "placar_session";
 const STORAGE_KEY: &str = "sessao";
 
-/// Antes de abrir a interface.
+/// Antes de abrir a interface. O Android pode recriar a tela (e rodar o
+/// `main` de novo) no mesmo processo, e o endereço só pode ser posto uma vez.
 pub fn setup() {
-    dioxus::fullstack::set_server_url(SERVER_URL);
+    if dioxus::fullstack::get_server_url().is_empty() {
+        dioxus::fullstack::set_server_url(SERVER_URL);
+    }
 }
 
 /// Quem está logado, guardando ou esquecendo a sessão do app. Substitui
