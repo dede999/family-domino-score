@@ -15,7 +15,7 @@ pre_compress = true
 # App Android. O identificador não pode mudar depois de publicado na Play
 # Store: é ele que diz que uma versão nova é atualização do mesmo app.
 [bundle]
-identifier = "com.santamariasoftware.placar"
+identifier = "com.sta_maria_software.domino_score"
 publisher = "Santa Maria Software"
 
 [android]

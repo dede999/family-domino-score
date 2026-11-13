@@ -13,7 +13,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 
-typealias BuildConfig = com.santamariasoftware.placar.BuildConfig
+typealias BuildConfig = com.sta_maria_software.domino_score.BuildConfig
 
 class MainActivity : WryActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
