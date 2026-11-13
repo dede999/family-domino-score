@@ -35,8 +35,9 @@ Turso (libsql). Objetivo principal: aprender Dioxus. As regras do jogo estão em
 
 ## Em andamento
 
-Nada. O app está no ar (ver `docs/DEPLOY.md`). Próximo item: Play Store
-(item 21 do `BACKLOG.md`).
+Nada. O site está no ar (ver `docs/DEPLOY.md`) e o app Android está na
+Play Store desde 2026-11-13 (item 21 do `BACKLOG.md`). Próximos: itens 22 a
+26, ainda em discussão.
 
 ## Teste da interface
 

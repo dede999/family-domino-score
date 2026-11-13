@@ -42,7 +42,8 @@ terminar o que já estava em andamento. A ordem é a desta lista e de
     um cartão por jogador.
 20. [x] Envio de e-mail de verdade por SMTP (Gmail), no ar em 2026-10-15.
     Os primeiros e-mails caem no spam (conta nova); marcar "Não é spam".
-21. [ ] Play Store (ver "Futuro: distribuição").
+21. [x] Play Store (ver "Futuro: distribuição"). Publicado em produção em
+    2026-11-13.
 22. [ ] **(em discussão)** Façanhas (pedido em 2026-11-08): caixa de texto
     livre e opcional ao marcar o resultado. Vazia, salva só o resultado;
     escrita, salva o texto junto. Aparece no histórico e na gaveta do boi.
@@ -387,7 +388,12 @@ depois a Play Store.
 - [ ] **APK em Releases do GitHub.** A família instala por fora da loja
   ("fontes desconhecidas"). Assinar sempre com a mesma chave, guardada fora
   do repositório: sem ela não dá para publicar atualizações.
-- [ ] **Play Store.** Pontos a conferir na época, porque as regras mudam:
+- [x] **Play Store.** Publicado em produção em 2026-11-13, com o pacote
+  `com.sta_maria_software.domino_score` (fixado no Console, não muda mais).
+  Link: https://play.google.com/store/apps/details?id=com.sta_maria_software.domino_score
+  Textos e capturas da ficha: `docs/LOJA.md` e `tools/store_shots.py`. Cada
+  envio novo precisa de versão nova no `Cargo.toml` (o número só pode ser
+  usado uma vez, em qualquer faixa). Pontos conferidos na época:
   - A taxa de conta de desenvolvedor do Google é paga uma vez (US$ 25 na
     última vez que conferi), não por ano. A anuidade de US$ 99 é da Apple.
   - Contas pessoais novas precisam de um teste fechado com pelo menos 12
